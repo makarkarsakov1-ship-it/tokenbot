@@ -1,6 +1,6 @@
 {
-  "short_name": "AuraWallet",
-  "name": "Aura NFC Fintech Wallet",
+  "short_name": "AuraPay",
+  "name": "Aura Contactless Fintech Wallet",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/10434/10434151.png",
@@ -10,9 +10,8 @@
     }
   ],
   "start_url": "./index.html",
-  "background_color": "#121212",
+  "background_color": "#1A1A1A",
   "theme_color": "#7B2EFF",
   "display": "standalone",
-  "orientation": "portrait",
-  "prefer_related_applications": false
+  "orientation": "portrait"
 }
