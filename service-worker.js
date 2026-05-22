@@ -1,5 +1,5 @@
-const CACHE_NAME = 'aura-wallet-v1';
-const ASSETS = [
+const CACHE_ID = 'aura-pay-v2';
+const CORE_ASSETS = [
   './',
   './index.html',
   './style.css',
@@ -8,40 +8,30 @@ const ASSETS = [
   'https://fonts.googleapis.com/icon?family=Material+Icons+Round'
 ];
 
-// Событие установки сервис-воркера и кэширование ресурсов
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching App Shell Assets');
-      return cache.addAll(ASSETS);
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(CACHE_ID).then((cache) => {
+      return cache.addAll(CORE_ASSETS);
     })
   );
 });
 
-// Событие активации и очистка старого кэша
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) {
-            console.log('[Service Worker] Removing old cache', key);
-            return caches.delete(key);
-          }
+        keys.map((k) => {
+          if (k !== CACHE_ID) return caches.delete(k);
         })
       );
     })
   );
 });
 
-// Стратегия кэширования Cache First / Network Fallback для мгновенной загрузки
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      return cachedResponse || fetch(event.request).catch(() => {
-        // Оффлайн заглушка при отсутствии соединения
-        console.log("Ресурс недоступен оффлайн");
-      });
+self.addEventListener('fetch', (e) => {
+  e.respondWith(
+    caches.match(e.request).then((res) => {
+      return res || fetch(e.request);
     })
   );
 });
