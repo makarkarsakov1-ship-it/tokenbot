@@ -11,274 +11,200 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#7B2EFF">
 </head>
-<body class="dark-theme">
+<body class="dark-theme"> <div id="splash-screen" class="screen active">
+        <div class="loader-container">
+            <div class="pulse-glow"></div>
+            <i class="material-icons-round logo-icon">blur_on</i>
+            <h1 class="logo-text">AURA</h1>
+        </div>
+    </div>
 
-    <main id="app-container">
+    <div id="auth-screen" class="screen">
+        <div class="auth-container">
+            <i class="material-icons-round auth-lock">fingerprint</i>
+            <h2>Вход в Aura Wallet</h2>
+            <p>Подтвердите личность для доступа к картам</p>
+            <button id="btn-biometric" class="btn-primary">Использовать Face / Touch ID</button>
+            <button id="btn-demo-login" class="btn-secondary">Войти по PIN-коду (Демо)</button>
+        </div>
+    </div>
+
+    <main id="app-container" class="hidden">
         
-        <section id="view-main" class="app-view active">
+        <section id="view-wallet" class="app-view active">
             <header class="view-header">
-                <div class="brand-block">
-                    <i class="material-icons-round brand-logo">blur_on</i>
-                    <h2>AURA PAY</h2>
+                <div class="user-profile-trigger" id="header-profile-btn">
+                    <div class="avatar">A</div>
+                    <span>Привет, Алекс</span>
                 </div>
-                <div class="header-status">
-                    <i class="material-icons-round status-icon">nfc</i>
-                    <span>HCE Ready</span>
-                </div>
+                <button id="theme-toggle" class="icon-btn">
+                    <i class="material-icons-round">light_mode</i>
+                </button>
             </header>
 
             <div class="cards-slider">
                 <div class="flip-card" id="main-card">
                     <div class="flip-card-inner">
-                        <div class="flip-card-front">
-                            <div class="card-top">
-                                <span class="bank-title">AURA DIGITAL</span>
-                                <i class="material-icons-round card-nfc">contactless</i>
+                        <div class="flip-card-front card-aura-purple">
+                            <div class="card-header">
+                                <span class="bank-name">AURA PREMIUM</span>
+                                <i class="material-icons-round card-nfc-icon">nfc</i>
                             </div>
                             <div class="card-chip"></div>
-                            <div class="card-num" id="display-card-number">•••• •••• •••• 4200</div>
-                            <div class="card-bottom">
-                                <div class="c-holder" id="display-card-holder">ALEXANDER V</div>
-                                <div class="c-exp" id="display-card-expiry">12/29</div>
+                            <div class="card-number">•••• •••• •••• 4200</div>
+                            <div class="card-footer">
+                                <div class="card-holder">ALEXander V</div>
+                                <div class="card-expiry">12/29</div>
                             </div>
                         </div>
                         <div class="flip-card-back">
-                            <div class="mag-stripe"></div>
-                            <div class="cvv-box">
-                                <span>CVC</span>
-                                <span class="cvv-code">***</span>
+                            <div class="magnetic-strip"></div>
+                            <div class="cvv-section">
+                                <span class="label">CVV2</span>
+                                <span class="cvv-value">***</span>
                             </div>
-                            <div class="legal-text">Демонстрационный токен AuraHCE. Данные защищены локальным шифрованием.</div>
+                            <div class="token-info">Tokenized via AuraHCE</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="main-actions">
-                <button id="btn-flip-card" class="btn-secondary"><i class="material-icons-round">flip</i> Повернуть</button>
-                <button id="btn-pay-terminal" class="btn-primary pulse-btn"><i class="material-icons-round">sensors</i> Поднести к терминалу</button>
+            <div class="card-actions">
+                <button id="btn-flip" class="btn-secondary btn-sm"><i class="material-icons-round">flip_camera_android</i> Повернуть</button>
+                <button id="btn-pay-nfc" class="btn-primary"><i class="material-icons-round">contactless</i> Оплатить Aura Pay</button>
             </div>
 
-            <div class="section-block">
-                <h3>Последние операции</h3>
-                <div class="tx-list" id="main-tx-container">
+            <div class="transactions-section">
+                <h3>История операций</h3>
+                <div class="transaction-list" id="transaction-container">
                     </div>
             </div>
         </section>
 
-        <section id="view-cards" class="app-view">
-            <div class="screen-title">
-                <h2>Ваши карты</h2>
-                <p>Управление токенизированными картами</p>
+        <section id="view-add-card" class="app-view">
+            <div class="view-header-back">
+                <h2>Новая карта</h2>
             </div>
-            
-            <div id="wallet-cards-container" class="saved-cards-stack">
+            <form id="add-card-form" class="standard-form">
+                <div class="form-group">
+                    <label>Номер карты</label>
+                    <input type="text" id="input-card-number" placeholder="0000 0000 0000 0000" maxlength="19" required>
                 </div>
-        </section>
-
-        <section id="view-add" class="app-view">
-            <div class="screen-title">
-                <h2>Добавление карты</h2>
-                <p>Данные шифруются на устройстве по стандарту ISO</p>
-            </div>
-
-            <form id="card-creation-form" class="wallet-form">
-                <div class="input-wrapper">
-                    <label>НОМЕР КАРТЫ</label>
-                    <input type="text" id="form-card-num" placeholder="0000 0000 0000 0000" maxlength="19" required>
-                </div>
-                <div class="input-row">
-                    <div class="input-wrapper">
-                        <label>СРОК ДЕЙСТВИЯ</label>
-                        <input type="text" id="form-card-exp" placeholder="MM/YY" maxlength="5" required>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Срок действия</label>
+                        <input type="text" id="input-card-expiry" placeholder="MM/YY" maxlength="5" required>
                     </div>
-                    <div class="input-wrapper">
-                        <label>CVC/CVV</label>
-                        <input type="password" id="form-card-cvv" placeholder="•••" maxlength="3" required>
+                    <div class="form-group">
+                        <label>CVV</label>
+                        <input type="password" id="input-card-cvv" placeholder="•••" maxlength="3" required>
                     </div>
                 </div>
-                <div class="input-wrapper">
-                    <label>ИМЯ ДЕРЖАТЕЛЯ КАРТЫ</label>
-                    <input type="text" id="form-card-holder" placeholder="IVAN IVANOV" required>
+                <div class="form-group">
+                    <label>Имя держателя</label>
+                    <input type="text" id="input-card-holder" placeholder="ALEXANDER V" required>
                 </div>
-                <button type="submit" class="btn-primary" style="margin-top: 16px;">Сохранить и токенизировать</button>
+                <button type="submit" class="btn-primary w-100">Токенизировать и добавить</button>
             </form>
         </section>
 
         <section id="view-settings" class="app-view">
-            <div class="screen-title">
-                <h2>Настройки и Справка</h2>
-            </div>
-
-            <div class="settings-group">
-                <div class="setting-row">
-                    <div class="setting-info">
-                        <i class="material-icons-round">dark_mode</i>
-                        <span>Темная тема интерфейса</span>
-                    </div>
-                    <label class="modern-toggle">
-                        <input type="checkbox" id="toggle-theme" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                <div class="setting-row">
-                    <div class="setting-info">
-                        <i class="material-icons-round">volume_up</i>
-                        <span>Звуковые уведомления</span>
-                    </div>
-                    <label class="modern-toggle">
-                        <input type="checkbox" id="toggle-sound" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                <div class="setting-row">
-                    <div class="setting-info">
-                        <i class="material-icons-round">vibration</i>
-                        <span>Виброотклик устройства</span>
-                    </div>
-                    <label class="modern-toggle">
-                        <input type="checkbox" id="toggle-vibration" checked>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="section-block">
-                <h3>Служба поддержки клиентов</h3>
-                <div class="support-card">
-                    <p>Возникли вопросы по работе бесконтактной оплаты или токенизации карт? Наша техническая группа доступна круглосуточно.</p>
-                    <button id="btn-support-sms" class="btn-primary"><i class="material-icons-round">sms</i> Написать в поддержку</button>
-                </div>
-            </div>
-
-            <div class="section-block">
-                <h3>Часто задаваемые вопросы (FAQ)</h3>
-                <div class="accordion-list">
-                    <div class="accordion-item">
-                        <div class="accordion-header">Как добавить карту? <i class="material-icons-round">expand_more</i></div>
-                        <div class="accordion-content"><p>Перейдите во вкладку «Добавить» в нижнем меню навигации, введите реквизиты вашей карты (номер, срок действия, CVC) и нажмите «Сохранить». Данные будут моментально токенизированы.</p></div>
-                    </div>
-                    <div class="accordion-item">
-                        <div class="accordion-header">Безопасны ли платежи? <i class="material-icons-round">expand_more</i></div>
-                        <div class="accordion-content"><p>Да. Приложение использует технологию криптографической эмуляции карт (HCE). Ваш реальный номер карты заменяется цифровым токеном, который невозможно перехватить.</p></div>
-                    </div>
-                    <div class="accordion-item">
-                        <div class="accordion-header">Что делать если платеж не проходит? <i class="material-icons-round">expand_more</i></div>
-                        <div class="accordion-content"><p>Убедитесь, что модуль NFC включен в системных настройках вашего Android устройства и приложение Aura Wallet выбрано в качестве основного платежного средства по умолчанию.</p></div>
-                    </div>
-                    <div class="accordion-item">
-                        <div class="accordion-header">Как удалить карту? <i class="material-icons-round">expand_more</i></div>
-                        <div class="accordion-content"><p>Перейдите в раздел «Карты», найдите нужную карту в списке сохраненных и нажмите на иконку удаления (корзину). Данные токена будут стерты из памяти смартфона.</p></div>
-                    </div>
-                    <div class="accordion-item">
-                        <div class="accordion-header">Почему нужна NFC? <i class="material-icons-round">expand_more</i></div>
-                        <div class="accordion-content"><p>NFC (Near Field Communication) — это технология беспроводной высокочастотной связи малого радиуса действия, позволяющая безопасно передавать платежный сигнал терминалу эквайринга.</p></div>
-                    </div>
-                    <div class="accordion-item">
-                        <div class="accordion-header">Как сменить тему? <i class="material-icons-round">expand_more</i></div>
-                        <div class="accordion-content"><p>В текущей вкладке «Настройки» переключите ползунок «Темная тема интерфейса». Цветовая схема приложения адаптируется мгновенно.</p></div>
-                    </div>
-                    <div class="accordion-item">
-                        <div class="accordion-header">Как работает защита данных? <i class="material-icons-round">expand_more</i></div>
-                        <div class="accordion-content"><p>Все реквизиты хранятся локально в изолированном песочнице-хранилище браузера (localStorage) без отправки на сторонние сервера в незашифрованном виде.</p></div>
-                    </div>
-                    <div class="accordion-item">
-                        <div class="accordion-header">Что делать при потере телефона? <i class="material-icons-round">expand_more</i></div>
-                        <div class="accordion-content"><p>Так как приложение не хранит данные на облачных серверах, для блокировки токенов вам достаточно обратиться в ваш банк-эмитент и заблокировать привязанные цифровые токены.</p></div>
-                    </div>
-                    <div class="accordion-item">
-                        <div class="accordion-header">Как включить вибрацию? <i class="material-icons-round">expand_more</i></div>
-                        <div class="accordion-content"><p>Активируйте переключатель «Виброотклик устройства» в верхнем блоке текущего экрана. Для работы функции устройство должно поддерживать Vibration API.</p></div>
-                    </div>
-                    <div class="accordion-item">
-                        <div class="accordion-header">Как работает бесконтактная оплата? <i class="material-icons-round">expand_more</i></div>
-                        <div class="accordion-content"><p>При нажатии кнопки «Поднести к терминалу» приложение эмулирует сигнал банковской карты. POS-терминал считывает токенизированную посылку по протоколу ISO 14443.</p></div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="section-block legal-block">
-                <h3>Политика конфиденциальности</h3>
-                <div class="legal-text-area">
-                    <h4>1. Хранение и обработка данных</h4>
-                    <p>Настоящее приложение Aura Wallet (далее — Приложение) осуществляет исключительно локальное хранение данных. Вся вводимая информация, включая номера банковских карт, имена держателей и платежные реквизиты, записывается в изолированное хранилище данных веб-браузера (localStorage) на конечном устройстве Пользователя.</p>
-                    <h4>2. Использование информации</h4>
-                    <p>Платежные реквизиты используются исключительно внутри интерфейса для построения визуальных моделей карт и демонстрации процессов токенизации HCE (Host Card Emulation). Сбор, анализ, трансграничная передача или отправка ваших персональных данных на удаленные сервера полностью исключены.</p>
-                    <h4>3. Безопасность и защита информации</h4>
-                    <p>Безопасность обеспечивается за счет встроенных механизмов песочницы (sandbox) операционной системы Android и веб-браузера. Доступ третьих лиц к локальному хранилищу ограничен политикой безопасности Same-Origin Policy.</p>
-                </div>
-            </div>
-
-            <div class="section-block legal-block">
-                <h3>Лицензионное пользовательское соглашение</h3>
-                <div class="legal-text-area">
-                    <h4>1. Правила использования программного обеспечения</h4>
-                    <p>Aura Wallet предоставляется на условиях "Как есть" (As Is). Пользователь имеет право использовать приложение для личного ознакомления с технологиями бесконтактной оплаты, принципами работы токенизации и интерфейсами платежных систем.</p>
-                    <h4>2. Ограничение ответственности</h4>
-                    <p>Разработчики и аффилированные лица не несут ответственности за любые убытки, упущенную выгоду или повреждения мобильного устройства, возникшие в результате использования или невозможности использования данного программного обеспечения. Приложение является симулятором (демо-архитектурой) и не списывает реальные денежные средства с ваших расчетных банковских счетов.</p>
-                    <h4>3. Работа демонстрационного NFC-модуля</h4>
-                    <p>Имитация транзакций, генерация случайных сумм списания и отображение вымышленных торговых точек (мерчантов) носят исключительно демонстрационный и ознакомительный характер.</p>
-                </div>
+            <div class="profile-summary">
+                <div class="avatar-large">A</div>
+                <h2>Александр Васильев</h2>
+                <span class="badge">Aura Black Member</span>
             </div>
             
-            <div style="height: 40px;"></div>
+            <div class="settings-list">
+                <div class="settings-item">
+                    <div class="item-left">
+                        <i class="material-icons-round">security</i>
+                        <span>Защита приложения (Биометрия)</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" checked id="setting-biometry">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="settings-item">
+                    <div class="item-left">
+                        <i class="material-icons-round">nfc</i>
+                        <span>Быстрая оплата без разблокировки</span>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="setting-hce">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="settings-item link" id="btn-clear-cache">
+                    <div class="item-left">
+                        <i class="material-icons-round">delete_sweep</i>
+                        <span>Сбросить данные кошелька</span>
+                    </div>
+                </div>
+            </div>
         </section>
 
-        <nav class="bottom-navigation">
-            <button class="nav-btn active" data-view="view-main">
+        <nav class="bottom-nav">
+            <button class="nav-item active" data-target="view-wallet">
                 <i class="material-icons-round">account_balance_wallet</i>
-                <span>Главная</span>
+                <span>Кошелек</span>
             </button>
-            <button class="nav-btn" data-view="view-cards">
-                <i class="material-icons-round">credit_card</i>
-                <span>Карты</span>
-            </button>
-            <button class="nav-btn" data-view="view-add">
-                <i class="material-icons-round">add_box</i>
+            <button class="nav-item" data-target="view-add-card">
+                <i class="material-icons-round">add_circle_outline</i>
                 <span>Добавить</span>
             </button>
-            <button class="nav-btn" data-view="view-settings">
-                <i class="material-icons-round">settings</i>
+            <button class="nav-item" data-target="view-settings">
+                <i class="material-icons-round">tune</i>
                 <span>Настройки</span>
             </button>
         </nav>
     </main>
 
-    <div id="overlay-nfc" class="overlay-modal">
-        <div class="modal-body glass-blur">
-            <div class="wave-radar-container">
-                <div class="wave-pulse wp-1"></div>
-                <div class="wave-pulse wp-2"></div>
-                <div class="wave-pulse wp-3"></div>
-                <i class="material-icons-round nfc-phone-icon">sensors</i>
+    <div id="nfc-overlay" class="overlay">
+        <div class="overlay-content glass">
+            <button class="close-overlay" id="close-nfc-btn"><i class="material-icons-round">close</i></button>
+            
+            <div class="nfc-animation-container">
+                <div class="wave-circle ring1"></div>
+                <div class="wave-circle ring2"></div>
+                <i class="material-icons-round nfc-phone-icon">contactless</i>
             </div>
+            
             <h3>Aura Pay</h3>
-            <p class="nfc-instructions">Удерживайте устройство рядом с POS-терминалом</p>
-            <div id="nfc-card-preview" class="mini-card-info">
-                <span>AURA DIGITAL</span>
-                <span id="nfc-preview-digits">•••• 4200</span>
+            <p class="status-text">Поднесите смартфон к терминалу</p>
+            
+            <div class="mini-card-preview">
+                <span id="nfc-card-name">AURA PREMIUM</span>
+                <span id="nfc-card-num">•••• 4200</span>
             </div>
-            <button id="btn-cancel-nfc" class="btn-secondary btn-sm">Отмена</button>
         </div>
     </div>
 
-    <div id="overlay-success" class="overlay-modal">
-        <div class="modal-body glass-blur">
-            <div class="success-icon-wrapper">
-                <div class="checkmark-circle">
-                    <i class="material-icons-round">check</i>
+    <div id="success-overlay" class="overlay">
+        <div class="overlay-content success-glass">
+            <div class="success-checkmark">
+                <div class="check-icon">
+                    <span class="icon-line line-tip"></span>
+                    <span class="icon-line line-long"></span>
+                    <div class="icon-circle"></div>
+                    <div class="icon-fix"></div>
                 </div>
             </div>
-            <h2 class="status-success-title">Оплата прошла успешно</h2>
-            <div class="receipt-data">
-                <h1 id="receipt-amount">0.00 ₽</h1>
-                <p id="receipt-merchant">Торговая точка</p>
-            </div>
-            <button id="btn-close-success" class="btn-primary">Готово</button>
+            <h3>Оплата успешна</h3>
+            <p id="success-amount">- 0.00 ₽</p>
+            <p class="success-merchant" id="success-merchant-name">Terminal POS</p>
+            <button id="btn-success-close" class="btn-primary">Готово</button>
         </div>
     </div>
 
-    <audio id="audio-success-bell" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==熟"></audio>
+    <div id="toast-notification" class="toast">
+        <i class="material-icons-round toast-icon">notifications_active</i>
+        <div class="toast-body">
+            <strong id="toast-title">Aura Wallet</strong>
+            <span id="toast-message">Уведомление</span>
+        </div>
+    </div>
 
 </body>
 </html>
