@@ -11,7 +11,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#7B2EFF">
 </head>
-<body class="dark-theme"> <div id="splash-screen" class="screen active">
+<body class="dark-theme">
+
+    <div id="splash-screen" class="screen active" style="display: flex;">
         <div class="loader-container">
             <div class="pulse-glow"></div>
             <i class="material-icons-round logo-icon">blur_on</i>
@@ -24,8 +26,8 @@
             <i class="material-icons-round auth-lock">fingerprint</i>
             <h2>Вход в Aura Wallet</h2>
             <p>Подтвердите личность для доступа к картам</p>
-            <button id="btn-biometric" class="btn-primary">Использовать Face / Touch ID</button>
-            <button id="btn-demo-login" class="btn-secondary">Войти по PIN-коду (Демо)</button>
+            <button id="btn-biometric" class="btn-primary" style="margin-bottom: 12px;">Использовать Face / Touch ID</button>
+            <button id="btn-demo-login" class="btn-secondary w-100">Войти без биометрии (Демо)</button>
         </div>
     </div>
 
@@ -33,9 +35,9 @@
         
         <section id="view-wallet" class="app-view active">
             <header class="view-header">
-                <div class="user-profile-trigger" id="header-profile-btn">
+                <div class="user-profile-trigger">
                     <div class="avatar">A</div>
-                    <span>Привет, Алекс</span>
+                    <span style="font-weight: 600;">Привет, Алекс</span>
                 </div>
                 <button id="theme-toggle" class="icon-btn">
                     <i class="material-icons-round">light_mode</i>
@@ -53,25 +55,25 @@
                             <div class="card-chip"></div>
                             <div class="card-number">•••• •••• •••• 4200</div>
                             <div class="card-footer">
-                                <div class="card-holder">ALEXander V</div>
+                                <div class="card-holder">ALEXANDER V</div>
                                 <div class="card-expiry">12/29</div>
                             </div>
                         </div>
                         <div class="flip-card-back">
                             <div class="magnetic-strip"></div>
                             <div class="cvv-section">
-                                <span class="label">CVV2</span>
-                                <span class="cvv-value">***</span>
+                                <span style="font-size: 10px; color: #6C757D; margin-right: 8px;">CVC2</span>
+                                <span class="cvv-value">883</span>
                             </div>
-                            <div class="token-info">Tokenized via AuraHCE</div>
+                            <div class="token-info">Tokenized via AuraHCE Engine</div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="card-actions">
-                <button id="btn-flip" class="btn-secondary btn-sm"><i class="material-icons-round">flip_camera_android</i> Повернуть</button>
-                <button id="btn-pay-nfc" class="btn-primary"><i class="material-icons-round">contactless</i> Оплатить Aura Pay</button>
+                <button id="btn-flip" class="btn-secondary btn-sm"><i class="material-icons-round" style="font-size: 14px; vertical-align: middle;">flip_camera_android</i> Инфо</button>
+                <button id="btn-pay-nfc" class="btn-primary"><i class="material-icons-round" style="font-size: 18px; vertical-align: middle; margin-right: 4px;">contactless</i> Оплатить</button>
             </div>
 
             <div class="transactions-section">
@@ -82,36 +84,36 @@
         </section>
 
         <section id="view-add-card" class="app-view">
-            <div class="view-header-back">
-                <h2>Новая карта</h2>
+            <div class="view-header" style="justify-content: flex-start; margin-bottom: 32px;">
+                <h2 style="font-weight: 700;">Новая карта</h2>
             </div>
             <form id="add-card-form" class="standard-form">
                 <div class="form-group">
-                    <label>Номер карты</label>
-                    <input type="text" id="input-card-number" placeholder="0000 0000 0000 0000" maxlength="19" required>
+                    <label>НОМЕР КАРТЫ</label>
+                    <input type="text" id="input-card-number" placeholder="5412 7500 1234 4200" maxlength="19" required>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Срок действия</label>
-                        <input type="text" id="input-card-expiry" placeholder="MM/YY" maxlength="5" required>
+                        <label>СРОК ДЕЙСТВИЯ</label>
+                        <input type="text" id="input-card-expiry" placeholder="12/29" maxlength="5" required>
                     </div>
                     <div class="form-group">
-                        <label>CVV</label>
+                        <label>CVC / CVV</label>
                         <input type="password" id="input-card-cvv" placeholder="•••" maxlength="3" required>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Имя держателя</label>
+                    <label>ИМЯ ДЕРЖАТЕЛЯ (ИНИЦИАЛЫ)</label>
                     <input type="text" id="input-card-holder" placeholder="ALEXANDER V" required>
                 </div>
-                <button type="submit" class="btn-primary w-100">Токенизировать и добавить</button>
+                <button type="submit" class="btn-primary w-100" style="margin-top: 16px;">Выпустить цифровой токен</button>
             </form>
         </section>
 
         <section id="view-settings" class="app-view">
             <div class="profile-summary">
                 <div class="avatar-large">A</div>
-                <h2>Александр Васильев</h2>
+                <h2 style="font-weight: 700;">Александр Васильев</h2>
                 <span class="badge">Aura Black Member</span>
             </div>
             
@@ -119,7 +121,7 @@
                 <div class="settings-item">
                     <div class="item-left">
                         <i class="material-icons-round">security</i>
-                        <span>Защита приложения (Биометрия)</span>
+                        <span>Биометрическая защита</span>
                     </div>
                     <label class="switch">
                         <input type="checkbox" checked id="setting-biometry">
@@ -129,16 +131,16 @@
                 <div class="settings-item">
                     <div class="item-left">
                         <i class="material-icons-round">nfc</i>
-                        <span>Быстрая оплата без разблокировки</span>
+                        <span>Бесконтактная оплата (HCE)</span>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" id="setting-hce">
+                        <input type="checkbox" checked id="setting-hce">
                         <span class="slider"></span>
                     </label>
                 </div>
                 <div class="settings-item link" id="btn-clear-cache">
                     <div class="item-left">
-                        <i class="material-icons-round">delete_sweep</i>
+                        <i class="material-icons-round" style="color: #ff4a4a;">delete_sweep</i>
                         <span>Сбросить данные кошелька</span>
                     </div>
                 </div>
@@ -163,7 +165,9 @@
 
     <div id="nfc-overlay" class="overlay">
         <div class="overlay-content glass">
-            <button class="close-overlay" id="close-nfc-btn"><i class="material-icons-round">close</i></button>
+            <button class="close-overlay" id="close-nfc-btn">
+                <i class="material-icons-round">close</i>
+            </button>
             
             <div class="nfc-animation-container">
                 <div class="wave-circle ring1"></div>
@@ -171,12 +175,12 @@
                 <i class="material-icons-round nfc-phone-icon">contactless</i>
             </div>
             
-            <h3>Aura Pay</h3>
+            <h3 style="font-weight: 700; font-size: 20px;">Aura Pay</h3>
             <p class="status-text">Поднесите смартфон к терминалу</p>
             
             <div class="mini-card-preview">
                 <span id="nfc-card-name">AURA PREMIUM</span>
-                <span id="nfc-card-num">•••• 4200</span>
+                <span id="nfc-card-num" style="font-family: monospace;">•••• 4200</span>
             </div>
         </div>
     </div>
@@ -187,21 +191,19 @@
                 <div class="check-icon">
                     <span class="icon-line line-tip"></span>
                     <span class="icon-line line-long"></span>
-                    <div class="icon-circle"></div>
-                    <div class="icon-fix"></div>
                 </div>
             </div>
-            <h3>Оплата успешна</h3>
+            <h3 style="font-weight: 700; font-size: 22px;">Оплата успешна</h3>
             <p id="success-amount">- 0.00 ₽</p>
             <p class="success-merchant" id="success-merchant-name">Terminal POS</p>
-            <button id="btn-success-close" class="btn-primary">Готово</button>
+            <button id="btn-success-close" class="btn-primary w-100">Готово</button>
         </div>
     </div>
 
     <div id="toast-notification" class="toast">
         <i class="material-icons-round toast-icon">notifications_active</i>
         <div class="toast-body">
-            <strong id="toast-title">Aura Wallet</strong>
+            <strong id="toast-title" style="font-weight: 700;">Aura Wallet</strong>
             <span id="toast-message">Уведомление</span>
         </div>
     </div>
