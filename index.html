@@ -1,210 +1,606 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Aura Wallet</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#7B2EFF">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AURA">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="description" content="AURA Wallet — бесконтактный кошелёк нового поколения">
+  
+  <title>AURA Wallet</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="dark-theme"> <div id="splash-screen" class="screen active">
-        <div class="loader-container">
-            <div class="pulse-glow"></div>
-            <i class="material-icons-round logo-icon">blur_on</i>
-            <h1 class="logo-text">AURA</h1>
-        </div>
+<body>
+
+<!-- ============================================================
+     APP ROOT
+     ============================================================ -->
+<div id="app">
+
+  <!-- ==================== SPLASH SCREEN ==================== -->
+  <div id="screen-splash" class="screen active">
+    <div class="splash-bg">
+      <div class="splash-orb splash-orb-1"></div>
+      <div class="splash-orb splash-orb-2"></div>
+      <div class="splash-orb splash-orb-3"></div>
+    </div>
+    <div class="splash-content">
+      <div class="splash-logo">✦</div>
+      <div class="splash-title">AURA</div>
+      <div class="splash-subtitle">Wallet</div>
+      <div class="splash-loader"></div>
+    </div>
+  </div>
+
+  <!-- ==================== AUTH SCREEN ==================== -->
+  <div id="screen-auth" class="screen">
+    <!-- Header с градиентом -->
+    <div class="auth-header">
+      <div class="auth-header-bg"></div>
+      <div class="auth-header-mesh"></div>
+      <div class="auth-header-pattern"></div>
+      <div class="auth-header-content">
+        <div class="auth-logo-small">✦</div>
+        <h1>Добро пожаловать<br>в AURA Wallet</h1>
+        <p>Бесконтактная оплата нового поколения</p>
+      </div>
     </div>
 
-    <div id="auth-screen" class="screen">
-        <div class="auth-container">
-            <i class="material-icons-round auth-lock">fingerprint</i>
-            <h2>Вход в Aura Wallet</h2>
-            <p>Подтвердите личность для доступа к картам</p>
-            <button id="btn-biometric" class="btn-primary">Использовать Face / Touch ID</button>
-            <button id="btn-demo-login" class="btn-secondary">Войти по PIN-коду (Демо)</button>
+    <!-- Body -->
+    <div class="auth-body">
+      <!-- Табы: Вход / Регистрация -->
+      <div class="auth-tabs">
+        <button class="auth-tab active">Вход</button>
+        <button class="auth-tab">Регистрация</button>
+      </div>
+
+      <!-- Телефон -->
+      <div class="input-group">
+        <div class="input-label">Номер телефона</div>
+        <div class="input-wrap">
+          <span class="input-icon">📱</span>
+          <input id="auth-phone" type="tel" placeholder="+7 (___) ___-__-__" inputmode="numeric">
         </div>
+      </div>
+
+      <!-- Пароль -->
+      <div class="input-group">
+        <div class="input-label">Пароль</div>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input id="auth-password" type="password" placeholder="Введите пароль">
+        </div>
+      </div>
+
+      <!-- Войти -->
+      <button class="btn-primary" onclick="AuthController.login(
+        document.getElementById('auth-phone').value,
+        document.getElementById('auth-password').value
+      )">
+        Войти
+      </button>
+
+      <div class="divider">или</div>
+
+      <!-- Биометрия Face ID -->
+      <button class="biometric-btn" onclick="BiometricAuth.show('faceid')">
+        <span class="biometric-icon">👤</span>
+        Войти через Face ID
+      </button>
+
+      <!-- Биометрия Touch ID -->
+      <button class="biometric-btn" onclick="BiometricAuth.show('touchid')">
+        <span class="biometric-icon">👆</span>
+        Войти через Touch ID
+      </button>
+
+      <div style="height: 20px"></div>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN SCREEN ==================== -->
+  <div id="screen-main" class="screen">
+    <!-- Status bar -->
+    <div class="app-status-bar">
+      <span class="status-time">12:00</span>
+      <div class="status-icons">
+        <span>📶</span>
+        <span>📡</span>
+        <span>🔋</span>
+      </div>
     </div>
 
-    <main id="app-container" class="hidden">
-        
-        <section id="view-wallet" class="app-view active">
-            <header class="view-header">
-                <div class="user-profile-trigger" id="header-profile-btn">
-                    <div class="avatar">A</div>
-                    <span>Привет, Алекс</span>
-                </div>
-                <button id="theme-toggle" class="icon-btn">
-                    <i class="material-icons-round">light_mode</i>
-                </button>
-            </header>
+    <!-- Scrollable content area -->
+    <div class="app-content">
 
-            <div class="cards-slider">
-                <div class="flip-card" id="main-card">
-                    <div class="flip-card-inner">
-                        <div class="flip-card-front card-aura-purple">
-                            <div class="card-header">
-                                <span class="bank-name">AURA PREMIUM</span>
-                                <i class="material-icons-round card-nfc-icon">nfc</i>
-                            </div>
-                            <div class="card-chip"></div>
-                            <div class="card-number">•••• •••• •••• 4200</div>
-                            <div class="card-footer">
-                                <div class="card-holder">ALEXander V</div>
-                                <div class="card-expiry">12/29</div>
-                            </div>
-                        </div>
-                        <div class="flip-card-back">
-                            <div class="magnetic-strip"></div>
-                            <div class="cvv-section">
-                                <span class="label">CVV2</span>
-                                <span class="cvv-value">***</span>
-                            </div>
-                            <div class="token-info">Tokenized via AuraHCE</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card-actions">
-                <button id="btn-flip" class="btn-secondary btn-sm"><i class="material-icons-round">flip_camera_android</i> Повернуть</button>
-                <button id="btn-pay-nfc" class="btn-primary"><i class="material-icons-round">contactless</i> Оплатить Aura Pay</button>
-            </div>
-
-            <div class="transactions-section">
-                <h3>История операций</h3>
-                <div class="transaction-list" id="transaction-container">
-                    </div>
-            </div>
-        </section>
-
-        <section id="view-add-card" class="app-view">
-            <div class="view-header-back">
-                <h2>Новая карта</h2>
-            </div>
-            <form id="add-card-form" class="standard-form">
-                <div class="form-group">
-                    <label>Номер карты</label>
-                    <input type="text" id="input-card-number" placeholder="0000 0000 0000 0000" maxlength="19" required>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Срок действия</label>
-                        <input type="text" id="input-card-expiry" placeholder="MM/YY" maxlength="5" required>
-                    </div>
-                    <div class="form-group">
-                        <label>CVV</label>
-                        <input type="password" id="input-card-cvv" placeholder="•••" maxlength="3" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Имя держателя</label>
-                    <input type="text" id="input-card-holder" placeholder="ALEXANDER V" required>
-                </div>
-                <button type="submit" class="btn-primary w-100">Токенизировать и добавить</button>
-            </form>
-        </section>
-
-        <section id="view-settings" class="app-view">
-            <div class="profile-summary">
-                <div class="avatar-large">A</div>
-                <h2>Александр Васильев</h2>
-                <span class="badge">Aura Black Member</span>
-            </div>
-            
-            <div class="settings-list">
-                <div class="settings-item">
-                    <div class="item-left">
-                        <i class="material-icons-round">security</i>
-                        <span>Защита приложения (Биометрия)</span>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" checked id="setting-biometry">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="settings-item">
-                    <div class="item-left">
-                        <i class="material-icons-round">nfc</i>
-                        <span>Быстрая оплата без разблокировки</span>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" id="setting-hce">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="settings-item link" id="btn-clear-cache">
-                    <div class="item-left">
-                        <i class="material-icons-round">delete_sweep</i>
-                        <span>Сбросить данные кошелька</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <nav class="bottom-nav">
-            <button class="nav-item active" data-target="view-wallet">
-                <i class="material-icons-round">account_balance_wallet</i>
-                <span>Кошелек</span>
-            </button>
-            <button class="nav-item" data-target="view-add-card">
-                <i class="material-icons-round">add_circle_outline</i>
-                <span>Добавить</span>
-            </button>
-            <button class="nav-item" data-target="view-settings">
-                <i class="material-icons-round">tune</i>
-                <span>Настройки</span>
-            </button>
-        </nav>
-    </main>
-
-    <div id="nfc-overlay" class="overlay">
-        <div class="overlay-content glass">
-            <button class="close-overlay" id="close-nfc-btn"><i class="material-icons-round">close</i></button>
-            
-            <div class="nfc-animation-container">
-                <div class="wave-circle ring1"></div>
-                <div class="wave-circle ring2"></div>
-                <i class="material-icons-round nfc-phone-icon">contactless</i>
-            </div>
-            
-            <h3>Aura Pay</h3>
-            <p class="status-text">Поднесите смартфон к терминалу</p>
-            
-            <div class="mini-card-preview">
-                <span id="nfc-card-name">AURA PREMIUM</span>
-                <span id="nfc-card-num">•••• 4200</span>
-            </div>
+      <!-- ===== HOME TAB ===== -->
+      <div id="tab-home" class="tab-panel active">
+        <!-- Приветствие -->
+        <div class="home-header">
+          <div>
+            <div class="home-greeting">Привет,</div>
+            <div class="home-name" id="home-name">Максим</div>
+          </div>
+          <div class="home-actions">
+            <div class="icon-btn notification-dot" onclick="Toast.show('Уведомления', '2 новых уведомления', '🔔')">🔔</div>
+            <div class="icon-btn" onclick="ThemeManager.toggle()">🌙</div>
+          </div>
         </div>
+
+        <!-- Карточки -->
+        <div class="cards-section">
+          <div class="section-header">
+            <span class="section-title">Мои карты</span>
+            <span class="section-action" onclick="TabRouter.switchTo('cards')">Все карты →</span>
+          </div>
+          <div class="cards-carousel" id="cards-carousel">
+            <!-- Рендерится из JS -->
+          </div>
+        </div>
+
+        <!-- Баланс -->
+        <div class="balance-section" style="margin: 0 20px">
+          <div class="balance-label">Общий баланс</div>
+          <div class="balance-amount" id="home-balance">47 832 ₽</div>
+          <div class="balance-change positive">↑ +50 000 ₽ сегодня</div>
+        </div>
+
+        <!-- Быстрые действия -->
+        <div class="quick-actions">
+          <div class="quick-action primary" onclick="Router.go('pay')">
+            <div class="quick-action-icon">📲</div>
+            <span class="quick-action-label">Оплатить</span>
+          </div>
+          <div class="quick-action" onclick="Toast.show('Перевод', 'Функция перевода денег', '💸')">
+            <div class="quick-action-icon">💸</div>
+            <span class="quick-action-label">Перевод</span>
+          </div>
+          <div class="quick-action" onclick="Toast.show('Пополнение', 'Пополнение счёта', '📥')">
+            <div class="quick-action-icon">📥</div>
+            <span class="quick-action-label">Пополнить</span>
+          </div>
+          <div class="quick-action" onclick="TabRouter.switchTo('history')">
+            <div class="quick-action-icon">📊</div>
+            <span class="quick-action-label">Аналитика</span>
+          </div>
+        </div>
+
+        <!-- Последние транзакции -->
+        <div class="transactions-section">
+          <div class="section-header">
+            <span class="section-title">Последние операции</span>
+            <span class="section-action" onclick="TabRouter.switchTo('history')">Все →</span>
+          </div>
+          <div class="tx-list" id="recent-transactions">
+            <!-- Рендерится из JS -->
+          </div>
+        </div>
+
+        <div style="height: 16px"></div>
+      </div>
+      <!-- END HOME TAB -->
+
+      <!-- ===== CARDS TAB ===== -->
+      <div id="tab-cards" class="tab-panel">
+        <div class="cards-tab-header">
+          <div class="cards-tab-title">Карты</div>
+          <button class="btn-primary" style="padding:10px 18px;font-size:13px" onclick="Router.go('add-card')">＋ Добавить</button>
+        </div>
+
+        <div class="cards-grid" id="cards-list">
+          <!-- Рендерится из JS -->
+        </div>
+
+        <div style="height: 16px"></div>
+      </div>
+      <!-- END CARDS TAB -->
+
+      <!-- ===== HISTORY TAB ===== -->
+      <div id="tab-history" class="tab-panel">
+        <div class="history-header">
+          <div class="history-title">История</div>
+          <div class="history-filter">
+            <div class="filter-chip active" onclick="filterHistory('all', this)">Все</div>
+            <div class="filter-chip" onclick="filterHistory('food', this)">Еда</div>
+            <div class="filter-chip" onclick="filterHistory('shopping', this)">Покупки</div>
+            <div class="filter-chip" onclick="filterHistory('transport', this)">Транспорт</div>
+            <div class="filter-chip" onclick="filterHistory('income', this)">Доходы</div>
+          </div>
+        </div>
+        <div class="history-content">
+          <div id="history-list">
+            <!-- Рендерится из JS -->
+          </div>
+        </div>
+      </div>
+      <!-- END HISTORY TAB -->
+
+      <!-- ===== PROFILE TAB ===== -->
+      <div id="tab-profile" class="tab-panel">
+        <!-- Шапка профиля -->
+        <div class="profile-header-wrap">
+          <div class="profile-bg"></div>
+          <div class="profile-header-content">
+            <div class="profile-avatar">🧑‍💻</div>
+            <div>
+              <div class="profile-name" id="profile-name">Максим Орлов</div>
+              <div class="profile-email" id="profile-email">max.orlov@mail.ru</div>
+              <div class="profile-tier">✦ AURA Pro</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Статистика -->
+        <div class="profile-stats">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-total">10</div>
+            <div class="stat-label">Транзакций</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-cards">3</div>
+            <div class="stat-label">Карты</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">PRO</div>
+            <div class="stat-label">Статус</div>
+          </div>
+        </div>
+
+        <!-- Настройки -->
+        <div class="section-sep">Аккаунт</div>
+        <div class="settings-list">
+          <div class="settings-item" onclick="Toast.show('Профиль', 'Редактирование профиля', '👤')">
+            <div class="settings-icon" style="background: rgba(123,46,255,0.15)">👤</div>
+            <div class="settings-text">
+              <div class="settings-label">Личные данные</div>
+              <div class="settings-desc">Имя, телефон, email</div>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
+          <div class="settings-item" onclick="Toast.show('Безопасность', 'Управление безопасностью', '🔐')">
+            <div class="settings-icon" style="background: rgba(0,214,143,0.15)">🔐</div>
+            <div class="settings-text">
+              <div class="settings-label">Безопасность</div>
+              <div class="settings-desc">PIN, биометрия, пароль</div>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
+        </div>
+
+        <div class="section-sep">Внешний вид</div>
+        <div class="settings-list">
+          <div class="settings-item">
+            <div class="settings-icon" style="background: rgba(123,46,255,0.15)">🌙</div>
+            <div class="settings-text">
+              <div class="settings-label">Тёмная тема</div>
+              <div class="settings-desc">Переключить оформление</div>
+            </div>
+            <div class="toggle-switch" data-theme-toggle onclick="ThemeManager.toggle()">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+          <div class="settings-item" onclick="Toast.show('Язык', 'Русский', '🌍')">
+            <div class="settings-icon" style="background: rgba(255,170,0,0.15)">🌍</div>
+            <div class="settings-text">
+              <div class="settings-label">Язык интерфейса</div>
+              <div class="settings-desc">Русский</div>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
+        </div>
+
+        <div class="section-sep">Приложение</div>
+        <div class="settings-list">
+          <div class="settings-item" onclick="installPWA()">
+            <div class="settings-icon" style="background: rgba(123,46,255,0.15)">📲</div>
+            <div class="settings-text">
+              <div class="settings-label">Установить приложение</div>
+              <div class="settings-desc">Добавить на рабочий стол</div>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
+          <div class="settings-item" onclick="Toast.show('Уведомления', 'Настройки уведомлений', '🔔')">
+            <div class="settings-icon" style="background: rgba(255,77,106,0.15)">🔔</div>
+            <div class="settings-text">
+              <div class="settings-label">Уведомления</div>
+              <div class="settings-desc">Push, SMS, email</div>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
+          <div class="settings-item" onclick="AuthController.logout()">
+            <div class="settings-icon" style="background: rgba(255,77,106,0.15)">🚪</div>
+            <div class="settings-text">
+              <div class="settings-label" style="color: var(--danger)">Выйти из аккаунта</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Версия -->
+        <div style="text-align:center;padding:24px 20px;color:var(--text-muted);font-size:12px">
+          AURA Wallet v1.0 · Made with 💜
+        </div>
+      </div>
+      <!-- END PROFILE TAB -->
+
+    </div>
+    <!-- END app-content -->
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+      <div class="nav-item active" data-tab="home" onclick="TabRouter.switchTo('home')">
+        <span class="nav-icon">🏠</span>
+        <span class="nav-label">Главная</span>
+      </div>
+      <div class="nav-item" data-tab="cards" onclick="TabRouter.switchTo('cards')">
+        <span class="nav-icon">💳</span>
+        <span class="nav-label">Карты</span>
+      </div>
+      <div class="nav-item" data-tab="history" onclick="TabRouter.switchTo('history')">
+        <span class="nav-icon">📋</span>
+        <span class="nav-label">История</span>
+      </div>
+      <div class="nav-item" data-tab="profile" onclick="TabRouter.switchTo('profile')">
+        <span class="nav-icon">👤</span>
+        <span class="nav-label">Профиль</span>
+      </div>
+    </nav>
+  </div>
+  <!-- END MAIN SCREEN -->
+
+  <!-- ==================== PAY SCREEN ==================== -->
+  <div id="screen-pay" class="screen">
+    <!-- Header -->
+    <div class="app-status-bar">
+      <span class="status-time">12:00</span>
+      <div class="status-icons"><span>🔋</span></div>
+    </div>
+    <div class="pay-header">
+      <div class="back-btn" onclick="PaymentController.stopNFC(); Router.back()">←</div>
+      <div class="pay-header-title">Бесконтактная оплата</div>
     </div>
 
-    <div id="success-overlay" class="overlay">
-        <div class="overlay-content success-glass">
-            <div class="success-checkmark">
-                <div class="check-icon">
-                    <span class="icon-line line-tip"></span>
-                    <span class="icon-line line-long"></span>
-                    <div class="icon-circle"></div>
-                    <div class="icon-fix"></div>
-                </div>
-            </div>
-            <h3>Оплата успешна</h3>
-            <p id="success-amount">- 0.00 ₽</p>
-            <p class="success-merchant" id="success-merchant-name">Terminal POS</p>
-            <button id="btn-success-close" class="btn-primary">Готово</button>
-        </div>
+    <!-- NFC анимация -->
+    <div class="nfc-arena">
+      <div class="nfc-bg-glow"></div>
+      <div class="nfc-rings-container">
+        <div class="nfc-ring"></div>
+        <div class="nfc-ring"></div>
+        <div class="nfc-ring"></div>
+        <div class="nfc-ring"></div>
+        <div class="nfc-center">📲</div>
+      </div>
+      <div class="nfc-instruction">
+        <h2>Поднесите телефон<br>к терминалу</h2>
+        <p>Держите телефон близко к NFC-терминалу<br>для мгновенной оплаты</p>
+      </div>
     </div>
 
-    <div id="toast-notification" class="toast">
-        <i class="material-icons-round toast-icon">notifications_active</i>
-        <div class="toast-body">
-            <strong id="toast-title">Aura Wallet</strong>
-            <span id="toast-message">Уведомление</span>
-        </div>
+    <!-- Выбранная карта -->
+    <div class="nfc-selected-card">
+      <div class="nfc-card-preview card-theme-violet" id="nfc-card-preview"></div>
+      <div class="nfc-card-info">
+        <div class="nfc-card-name" id="nfc-card-name">AURA Platinum</div>
+        <div class="nfc-card-num" id="nfc-card-num">•••• 9012</div>
+      </div>
+      <div class="nfc-status-dot"></div>
     </div>
 
+    <!-- Кнопки -->
+    <div style="padding: 0 20px 32px; display: flex; flex-direction: column; gap: 12px">
+      <button class="btn-primary" onclick="PaymentController.demoPayment()">
+        💜 Демо-оплата
+      </button>
+      <button class="btn-secondary" onclick="PaymentController.stopNFC(); Router.back()">
+        Отмена
+      </button>
+    </div>
+  </div>
+  <!-- END PAY SCREEN -->
+
+  <!-- ==================== SUCCESS SCREEN ==================== -->
+  <div id="screen-success" class="screen">
+    <div class="success-container">
+      <div class="success-checkmark">✓</div>
+      <div class="success-title">Оплачено!</div>
+      <div class="success-subtitle">Транзакция прошла успешно</div>
+
+      <div class="success-amount" id="success-amount">−890 ₽</div>
+      <div class="success-merchant" id="success-merchant">Яндекс Еда</div>
+
+      <div class="success-details">
+        <div class="success-detail-row">
+          <span class="detail-label">Статус</span>
+          <span class="detail-value" style="color: var(--success)">✓ Одобрено</span>
+        </div>
+        <div class="success-detail-row">
+          <span class="detail-label">Карта</span>
+          <span class="detail-value" id="success-card">•••• 9012</span>
+        </div>
+        <div class="success-detail-row">
+          <span class="detail-label">Время</span>
+          <span class="detail-value" id="success-time">12:00</span>
+        </div>
+        <div class="success-detail-row">
+          <span class="detail-label">Код авторизации</span>
+          <span class="detail-value" id="success-authcode">A1B2C3</span>
+        </div>
+      </div>
+
+      <button class="btn-primary" style="width:100%" onclick="Router.go('main', {replace:true}); UI.renderHome()">
+        На главную
+      </button>
+    </div>
+  </div>
+  <!-- END SUCCESS SCREEN -->
+
+  <!-- ==================== ADD CARD SCREEN ==================== -->
+  <div id="screen-add-card" class="screen">
+    <div class="app-status-bar">
+      <span class="status-time">12:00</span>
+    </div>
+    <div class="add-card-header">
+      <div class="back-btn" onclick="Router.back()">←</div>
+      <div class="pay-header-title">Добавить карту</div>
+    </div>
+
+    <!-- Превью карты -->
+    <div class="card-preview-wrap">
+      <div class="card-preview-live card-theme-violet" id="card-preview-live">
+        <div class="card-mesh"></div>
+        <div class="card-pattern"></div>
+        <div class="card-chip"></div>
+        <div class="card-contactless">⊙</div>
+        <div style="position:absolute;bottom:50px;left:22px;font-family:var(--font-display);font-size:15px;color:rgba(255,255,255,0.9);letter-spacing:3px">
+          **** **** **** ****
+        </div>
+        <div style="position:absolute;bottom:18px;left:22px">
+          <div style="font-size:9px;color:rgba(255,255,255,0.6)">VALID THRU</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.9);font-weight:600">MM/YY</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Форма -->
+    <div class="card-form">
+      <!-- Номер карты -->
+      <div class="input-group">
+        <div class="input-label">Номер карты</div>
+        <div class="card-number-inputs">
+          <input id="cn1" class="card-num-part" type="text" inputmode="numeric" placeholder="****" maxlength="4">
+          <input id="cn2" class="card-num-part" type="text" inputmode="numeric" placeholder="****" maxlength="4">
+          <input id="cn3" class="card-num-part" type="text" inputmode="numeric" placeholder="****" maxlength="4">
+          <input id="cn4" class="card-num-part" type="text" inputmode="numeric" placeholder="****" maxlength="4">
+        </div>
+      </div>
+
+      <!-- Срок и CVV -->
+      <div class="card-row">
+        <div class="input-group">
+          <div class="input-label">Срок действия</div>
+          <div class="input-wrap">
+            <input id="card-expiry-input" type="text" placeholder="MM/YY" inputmode="numeric" maxlength="5" style="padding-left:16px">
+          </div>
+        </div>
+        <div class="input-group">
+          <div class="input-label">CVV / CVC</div>
+          <div class="input-wrap">
+            <input id="card-cvv-input" type="password" placeholder="•••" inputmode="numeric" maxlength="3" style="padding-left:16px">
+          </div>
+        </div>
+      </div>
+
+      <!-- Название карты -->
+      <div class="input-group">
+        <div class="input-label">Название карты</div>
+        <div class="input-wrap">
+          <span class="input-icon">🏷️</span>
+          <input id="card-name-input" type="text" placeholder="Например: Моя карта">
+        </div>
+      </div>
+
+      <!-- Выбор цвета -->
+      <div class="input-group">
+        <div class="input-label">Тема карты</div>
+        <div class="color-picker">
+          <div class="color-swatch selected card-theme-violet" style="background:linear-gradient(135deg,#3B1E8C,#7B2EFF)"
+               onclick="AddCardController.selectTheme('card-theme-violet', this)"></div>
+          <div class="color-swatch card-theme-dark" style="background:linear-gradient(135deg,#0f0f1a,#1a1a2e)"
+               onclick="AddCardController.selectTheme('card-theme-dark', this)"></div>
+          <div class="color-swatch card-theme-aurora" style="background:linear-gradient(135deg,#0d1b2a,#2d6a4f)"
+               onclick="AddCardController.selectTheme('card-theme-aurora', this)"></div>
+          <div class="color-swatch card-theme-rose" style="background:linear-gradient(135deg,#4a0e2e,#c2185b)"
+               onclick="AddCardController.selectTheme('card-theme-rose', this)"></div>
+        </div>
+      </div>
+
+      <!-- Кнопки -->
+      <button class="btn-primary" onclick="AddCardController.submit()">
+        Привязать карту
+      </button>
+      <button class="btn-secondary" onclick="Router.back()" style="margin-bottom:32px">
+        Отмена
+      </button>
+    </div>
+  </div>
+  <!-- END ADD CARD SCREEN -->
+
+</div>
+<!-- END APP -->
+
+<!-- ============================================================
+     MODALS
+     ============================================================ -->
+
+<!-- Biometric Modal -->
+<div id="biometric-modal" class="modal-overlay">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="biometric-ring">
+      <div class="biometric-ring-outer"></div>
+      <div class="biometric-ring-inner"></div>
+      <span class="biometric-icon-large" id="biometric-icon-large">👤</span>
+    </div>
+    <h2 style="font-family:var(--font-display);font-size:22px;font-weight:700;margin-bottom:10px" id="biometric-title">Face ID</h2>
+    <p style="font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:28px" id="biometric-desc">
+      Поднесите телефон к лицу для авторизации
+    </p>
+    <button class="btn-secondary" onclick="BiometricAuth.cancel()" style="width:100%">
+      Отмена
+    </button>
+  </div>
+</div>
+
+<!-- Toast Notifications -->
+<div id="toast-container" class="toast-container"></div>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay" class="loading-overlay">
+  <div class="loading-ring"></div>
+  <div class="loading-text">Обработка...</div>
+</div>
+
+<!-- ============================================================
+     INLINE SCRIPT — History Filter
+     ============================================================ -->
+<script>
+function filterHistory(category, el) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+
+  const el2 = document.getElementById('history-list');
+  if (!el2) return;
+
+  const txs = category === 'all'
+    ? AppState.transactions
+    : AppState.transactions.filter(t => t.category === category);
+
+  // Группировка
+  const groups = {};
+  txs.forEach(tx => {
+    const key = tx.date.split(',')[0];
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(tx);
+  });
+
+  if (Object.keys(groups).length === 0) {
+    el2.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted);font-size:14px">Нет операций</div>`;
+    return;
+  }
+
+  el2.innerHTML = Object.entries(groups).map(([date, txArr]) => `
+    <div class="tx-group">
+      <div class="tx-group-date">${date}</div>
+      ${txArr.map(tx => UI.renderTransaction(tx)).join('')}
+    </div>
+  `).join('');
+}
+</script>
+
+<script src="app.js"></script>
 </body>
-</html>
+    </html>
