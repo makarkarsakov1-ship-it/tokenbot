@@ -1,36 +1,52 @@
 /**
- * Aura Wallet - Архитектурное финтех PWA-приложение (Mock-реализация)
+ * Aura Wallet - Архитектурное финтех PWA-приложение
  */
 
-// Хранилище данных (Mock State)
-const state = {
-    theme: localStorage.getItem('aura-theme') || 'dark-theme',
-    isAuth: false,
-    cards: JSON.parse(localStorage.getItem('aura-cards')) || [
-        { id: 1, type: 'AURA PREMIUM', number: '•••• •••• •••• 4200', holder: 'ALEXANDER V', expiry: '12/29', rawNumber: '5412750012344200' }
-    ],
-    transactions: JSON.parse(localStorage.getItem('aura-tx')) || [
-        { id: 101, merchant: 'Supermarket Magnit', amount: '- 542.00 ₽', date: 'Сегодня, 14:23', icon: 'shopping_bag' },
-        { id: 102, merchant: 'Starbucks Coffee', amount: '- 320.00 ₽', date: 'Вчера, 09:11', icon: 'local_cafe' },
-        { id: 103, merchant: 'Пополнение карты', amount: '+ 10 000.00 ₽', date: '18 Мая, 18:40', icon: 'arrow_downward' }
-    ],
-    settings: {
-        biometry: true,
-        hceEnabled: true
+// Безопасное чтение из localStorage (чтобы избежать зависания при пустом хранилище)
+const getLocalStorageData = (key, defaultValue) => {
+    try {
+        const data = localStorage.getItem(key);
+        return data ? JSON.parse(data) : defaultValue;
+    } catch (e) {
+        console.error("Ошибка чтения localStorage для ключа " + key, e);
+        return defaultValue;
     }
 };
 
-// Инициализация при полной загрузке DOM
+// Хранилище данных (State)
+const state = {
+    theme: localStorage.getItem('aura-theme') || 'dark-theme',
+    isAuth: false,
+    cards: getLocalStorageData('aura-cards', [
+        { id: 1, type: 'AURA PREMIUM', number: '•••• •••• •••• 4200', holder: 'ALEXANDER V', expiry: '12/29', rawNumber: '5412750012344200' }
+    ]),
+    transactions: getLocalStorageData('aura-tx', [
+        { id: 101, merchant: 'Супермаркет Магнит', amount: '- 542.00 ₽', date: 'Сегодня, 14:23', icon: 'shopping_bag' },
+        { id: 102, merchant: 'Starbucks Coffee', amount: '- 320.00 ₽', date: 'Вчера, 09:11', icon: 'local_cafe' },
+        { id: 103, merchant: 'Пополнение карты', amount: '+ 10 000.00 ₽', date: '18 Мая, 18:40', icon: 'arrow_downward' }
+    ])
+};
+
+// Инициализация при загрузке DOM
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     renderTransactions();
     setupNavigation();
     setupEventHandlers();
     
-    // Имитация загрузки Сплэш-экрана
+    // ПРИНУДИТЕЛЬНЫЙ ПЕРЕХОД: убираем Splash-screen через 2.2 секунды
     setTimeout(() => {
-        document.getElementById('splash-screen').classList.remove('active');
-        document.getElementById('auth-screen').classList.add('active');
+        const splash = document.getElementById('splash-screen');
+        const auth = document.getElementById('auth-screen');
+        
+        if (splash && auth) {
+            splash.classList.remove('active');
+            splash.style.display = 'none'; // Полностью скрываем элемент из DOM-дерева
+            auth.classList.add('active');
+            console.log("Splash screen успешно скрыт. Переход на экран авторизации.");
+        } else {
+            console.error("Критические элементы UI не найдены в DOM!");
+        }
     }, 2200);
 });
 
@@ -38,13 +54,17 @@ document.addEventListener('DOMContentLoaded', () => {
 function initTheme() {
     document.body.className = state.theme;
     const toggleBtn = document.getElementById('theme-toggle');
-    toggleBtn.innerHTML = state.theme === 'dark-theme' ? 
-        `<i class="material-icons-round">light_mode</i>` : `<i class="material-icons-round">dark_mode</i>`;
+    if (toggleBtn) {
+        toggleBtn.innerHTML = state.theme === 'dark-theme' ? 
+            `<i class="material-icons-round">light_mode</i>` : `<i class="material-icons-round">dark_mode</i>`;
+    }
 }
 
 // Рендеринг транзакций
 function renderTransactions() {
     const container = document.getElementById('transaction-container');
+    if (!container) return;
+    
     container.innerHTML = state.transactions.map(tx => `
         <div class="transaction-item">
             <div class="tx-left">
@@ -59,7 +79,7 @@ function renderTransactions() {
     `).join('');
 }
 
-// Роутинг экранов (SPA-навигация)
+// Навигация (SPA)
 function setupNavigation() {
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach(item => {
@@ -67,76 +87,95 @@ function setupNavigation() {
             const currentItem = e.currentTarget;
             const targetViewId = currentItem.getAttribute('data-target');
             
-            // Смена активного класса на кнопках таббара
             navItems.forEach(btn => btn.classList.remove('active'));
             currentItem.classList.add('active');
             
-            // Смена экранов
             document.querySelectorAll('.app-view').forEach(view => view.classList.remove('active'));
-            document.getElementById(targetViewId).classList.add('active');
+            const targetView = document.getElementById(targetViewId);
+            if (targetView) targetView.classList.add('active');
         });
     });
 }
 
-// Настройка обработчиков событий
+// Обработчики событий
 function setupEventHandlers() {
-    // Демо-авторизация (Имитация Face ID)
-    document.getElementById('btn-biometric').addEventListener('click', runBiometricAuth);
-    document.getElementById('btn-demo-login').addEventListener('click', runBiometricAuth);
+    // Вход в приложение
+    const btnBiometric = document.getElementById('btn-biometric');
+    const btnDemoLogin = document.getElementById('btn-demo-login');
+    
+    if (btnBiometric) btnBiometric.addEventListener('click', runBiometricAuth);
+    if (btnDemoLogin) btnDemoLogin.addEventListener('click', runBiometricAuth);
 
     // Переключение темы
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-        state.theme = state.theme === 'dark-theme' ? 'light-theme' : 'dark-theme';
-        localStorage.setItem('aura-theme', state.theme);
-        initTheme();
-    });
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            state.theme = state.theme === 'dark-theme' ? 'light-theme' : 'dark-theme';
+            localStorage.setItem('aura-theme', state.theme);
+            initTheme();
+        });
+    }
 
-    // Анимация переворота карты
-    document.getElementById('btn-flip').addEventListener('click', () => {
-        document.getElementById('main-card').classList.toggle('flipped');
-    });
+    // Поворот карты
+    const btnFlip = document.getElementById('btn-flip');
+    if (btnFlip) {
+        btnFlip.addEventListener('click', () => {
+            const card = document.getElementById('main-card');
+            if (card) card.classList.toggle('flipped');
+        });
+    }
 
-    // Вызов оверлея NFC оплаты
-    document.getElementById('btn-pay-nfc').addEventListener('click', triggerNFCPaymentProcess);
-    document.getElementById('close-nfc-btn').addEventListener('click', () => {
-        document.getElementById('nfc-overlay').classList.remove('active');
-    });
+    // NFC Оплата
+    const btnPayNfc = document.getElementById('btn-pay-nfc');
+    if (btnPayNfc) btnPayNfc.addEventListener('click', triggerNFCPaymentProcess);
+    
+    const closeNfcBtn = document.getElementById('close-nfc-btn');
+    if (closeNfcBtn) {
+        closeNfcBtn.addEventListener('click', () => {
+            document.getElementById('nfc-overlay').classList.remove('active');
+        });
+    }
 
-    // Обработка закрытия экрана успеха
-    document.getElementById('btn-success-close').addEventListener('click', () => {
-        document.getElementById('success-overlay').classList.remove('active');
-    });
+    // Закрытие экрана успеха
+    const btnSuccessClose = document.getElementById('btn-success-close');
+    if (btnSuccessClose) {
+        btnSuccessClose.addEventListener('click', () => {
+            document.getElementById('success-overlay').classList.remove('active');
+        });
+    }
 
-    // Добавление новой карты (Токенизация)
-    document.getElementById('add-card-form').addEventListener('submit', handleAddCard);
+    // Добавление карты
+    const addCardForm = document.getElementById('add-card-form');
+    if (addCardForm) addCardForm.addEventListener('submit', handleAddCard);
 
-    // Сброс кэша в настройках
-    document.getElementById('btn-clear-cache').addEventListener('click', () => {
-        localStorage.clear();
-        showNotification('Данные очищены', 'Приложение перезагрузится');
-        setTimeout(() => location.reload(), 1500);
-    });
+    // Очистка кэша
+    const btnClearCache = document.getElementById('btn-clear-cache');
+    if (btnClearCache) {
+        btnClearCache.addEventListener('click', () => {
+            localStorage.clear();
+            showNotification('Данные очищены', 'Приложение перезагрузится');
+            setTimeout(() => location.reload(), 1500);
+        });
+    }
 }
 
-// Имитация биометрического входа
+// Биометрия
 function runBiometricAuth() {
     const btn = document.getElementById('btn-biometric');
-    btn.innerText = "Проверка...";
+    if (btn) btn.innerText = "Проверка...";
     
-    // Имитируем задержку сканирования отпечатка/лица
     setTimeout(() => {
         state.isAuth = true;
         document.getElementById('auth-screen').classList.remove('active');
+        document.getElementById('auth-screen').style.display = 'none';
         document.getElementById('app-container').classList.remove('hidden');
         showNotification('Доступ разрешен', 'Добро пожаловать в Aura Wallet');
-    }, 1200);
+    }, 1000);
 }
 
-/**
- * ИМИТАЦИЯ ТЕХНОЛОГИЙ NFC И ТОКЕНИЗАЦИИ (Архитектурные заглушки)
- */
+// Симуляция NFC
 function triggerNFCPaymentProcess() {
-    if(state.cards.length === 0) {
+    if (state.cards.length === 0) {
         showNotification('Ошибка оплаты', 'Сначала добавьте платежную карту');
         return;
     }
@@ -145,26 +184,18 @@ function triggerNFCPaymentProcess() {
     document.getElementById('nfc-card-name').innerText = activeCard.type;
     document.getElementById('nfc-card-num').innerText = activeCard.number.slice(-9);
     
-    // Показываем экран "Поднесите к терминалу"
     document.getElementById('nfc-overlay').classList.add('active');
 
-    // Имитация обнаружения терминала (Host Card Emulation / HCE Trigger)
     setTimeout(() => {
-        const hceEngine = new AuraHCEMockEngine();
-        const paymentToken = hceEngine.generatePaymentToken(activeCard.rawNumber);
-        
         document.querySelector('.status-text').innerText = "Передача данных токена...";
         
-        // Имитируем процессинг банка
         setTimeout(() => {
             document.getElementById('nfc-overlay').classList.remove('active');
             
-            // Генерируем фейковую покупку
             const sum = (Math.random() * 1500 + 50).toFixed(2);
-            const merchants = ['Кофе Хауз', 'ВкусВилл', 'АЗС Газпромнефть', 'Яндекс Такси'];
+            const merchants = ['Перекресток', 'ВкусВилл', 'Яндекс Такси', 'Додо Пицца'];
             const randomMerchant = merchants[Math.floor(Math.random() * merchants.length)];
             
-            // Запись в стейт новой транзакции
             const newTx = {
                 id: Date.now(),
                 merchant: randomMerchant,
@@ -176,19 +207,16 @@ function triggerNFCPaymentProcess() {
             localStorage.setItem('aura-tx', JSON.stringify(state.transactions));
             renderTransactions();
 
-            // Вывод экрана успешной оплаты
             document.getElementById('success-amount').innerText = `- ${sum} ₽`;
             document.getElementById('success-merchant-name').innerText = randomMerchant;
             document.getElementById('success-overlay').classList.add('active');
             
-            // Сбрасываем текст состояния NFC на исходный
-            document.querySelector('.status-text').innerText = "Поднесите смартфон к терминалу";
-            
+            document.querySelector('.status-text').innerText = "Поднесите smartphone к терминалу";
         }, 1500);
-    }, 3000); // 3 секунды ожидания "прикладывания" телефона
+    }, 2500);
 }
 
-// Обработка формы создания карты и её токенизация
+// Добавление карты
 function handleAddCard(e) {
     e.preventDefault();
     
@@ -201,9 +229,8 @@ function handleAddCard(e) {
         return;
     }
 
-    // Имитируем архитектуру токенизации (Token Service Provider типа Visa Token Service / MDES / Mir Token)
-    const tsp = new AuraTokenServiceProvider();
-    const tokenizedMask = tsp.tokenizeCardNumber(rawNumber);
+    const last4 = rawNumber.slice(-4);
+    const tokenizedMask = `•••• •••• •••• ${last4}`;
 
     const newCard = {
         id: Date.now(),
@@ -217,48 +244,35 @@ function handleAddCard(e) {
     state.cards.unshift(newCard);
     localStorage.setItem('aura-cards', JSON.stringify(state.cards));
     
-    // Обновляем визуальный интерфейс главной карты данными только что созданной
     document.querySelector('.bank-name').innerText = newCard.type;
     document.querySelector('.card-number').innerText = newCard.number;
     document.querySelector('.card-holder').innerText = newCard.holder;
     document.querySelector('.card-expiry').innerText = newCard.expiry;
 
-    showNotification('Успешно', 'Карта защищена и добавлена в Aura Pay');
+    showNotification('Успешно', 'Карта добавлена в Aura Pay');
     document.getElementById('add-card-form').reset();
     
-    // Возвращаемся на кошелек
     document.querySelector('.nav-item[data-target="view-wallet"]').click();
 }
 
-// Система кастомных PUSH/Toast UI уведомлений
+// Оповещения
 function showNotification(title, message) {
     const toast = document.getElementById('toast-notification');
+    if (!toast) return;
     document.getElementById('toast-title').innerText = title;
     document.getElementById('toast-message').innerText = message;
     
     toast.classList.add('active');
     setTimeout(() => {
         toast.classList.remove('active');
-    }, 3500);
+    }, 3000);
 }
 
-/**
- * ИМИТАЦИОННЫЕ ИНЖЕНЕРНЫЕ КЛАССЫ (ЗАГОТОВКИ ДЛЯ ПОДКЛЮЧЕНИЯ БАНКОВСКИХ SDK)
- */
-class AuraTokenServiceProvider {
-    // Имитация процесса превращения PAN (номера карты) в токен (DPAN)
-    tokenizeCardNumber(pan) {
-        const last4 = pan.slice(-4);
-        // Возвращаем токенизированную маску
-        return `•••• •••• •••• ${last4}`;
-    }
+// АВТОМАТИЧЕСКАЯ РЕГИСТРАЦИЯ SERVICE WORKER
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+            .then(reg => console.log('Service Worker зарегистрирован!', reg.scope))
+            .catch(err => console.error('Ошибка Service Worker:', err));
+    });
 }
-
-class AuraHCEMockEngine {
-    // Эмуляция Host Card Emulation на Android для обмена APDU-командами с POS-терминалом по стандарту ISO 7816
-    generatePaymentToken(rawCardNumber) {
-        console.log("HCE Session initialized. Exchanging APDU cryptograms...");
-        // В реальности здесь генерируется одноразовый сессионный ключ (cryptogram) на базе системного Keystore
-        return "MOCK_CRYPTO_TOKEN_SHA256_" + Math.random().toString(36).substring(2, 10).toUpperCase();
-    }
-                            }
