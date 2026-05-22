@@ -1,278 +1,272 @@
 /**
- * Aura Wallet - Архитектурное финтех PWA-приложение
+ * Aura Wallet - Процессинговая логика приложения (2026)
  */
 
-// Безопасное чтение из localStorage (чтобы избежать зависания при пустом хранилище)
-const getLocalStorageData = (key, defaultValue) => {
-    try {
-        const data = localStorage.getItem(key);
-        return data ? JSON.parse(data) : defaultValue;
-    } catch (e) {
-        console.error("Ошибка чтения localStorage для ключа " + key, e);
-        return defaultValue;
-    }
-};
-
-// Хранилище данных (State)
+// Локальное реактивное состояние
 const state = {
-    theme: localStorage.getItem('aura-theme') || 'dark-theme',
-    isAuth: false,
-    cards: getLocalStorageData('aura-cards', [
-        { id: 1, type: 'AURA PREMIUM', number: '•••• •••• •••• 4200', holder: 'ALEXANDER V', expiry: '12/29', rawNumber: '5412750012344200' }
-    ]),
-    transactions: getLocalStorageData('aura-tx', [
-        { id: 101, merchant: 'Супермаркет Магнит', amount: '- 542.00 ₽', date: 'Сегодня, 14:23', icon: 'shopping_bag' },
-        { id: 102, merchant: 'Starbucks Coffee', amount: '- 320.00 ₽', date: 'Вчера, 09:11', icon: 'local_cafe' },
-        { id: 103, merchant: 'Пополнение карты', amount: '+ 10 000.00 ₽', date: '18 Мая, 18:40', icon: 'arrow_downward' }
-    ])
+    theme: localStorage.getItem('aura_theme') || 'dark-theme',
+    soundEnabled: JSON.parse(localStorage.getItem('aura_sound') !== null ? localStorage.getItem('aura_sound') : 'true'),
+    vibeEnabled: JSON.parse(localStorage.getItem('aura_vibe') !== null ? localStorage.getItem('aura_vibe') : 'true'),
+    cards: JSON.parse(localStorage.getItem('aura_cards')) || [
+        { id: 1, holder: 'ALEXANDER V', expiry: '12/29', maskNumber: '•••• •••• •••• 4200' }
+    ],
+    txHistory: [
+        { id: 1, store: 'Супермаркет Магнит', cost: '- 412.00 ₽', date: 'Сегодня, 10:45' },
+        { id: 2, store: 'Кофейня Surf Coffee', cost: '- 280.00 ₽', date: 'Вчера, 18:20' }
+    ]
 };
 
-// Инициализация при загрузке DOM
 document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
-    renderTransactions();
-    setupNavigation();
-    setupEventHandlers();
-    
-    // ПРИНУДИТЕЛЬНЫЙ ПЕРЕХОД: убираем Splash-screen через 2.2 секунды
-    setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        const auth = document.getElementById('auth-screen');
-        
-        if (splash && auth) {
-            splash.classList.remove('active');
-            splash.style.display = 'none'; // Полностью скрываем элемент из DOM-дерева
-            auth.classList.add('active');
-            console.log("Splash screen успешно скрыт. Переход на экран авторизации.");
-        } else {
-            console.error("Критические элементы UI не найдены в DOM!");
-        }
-    }, 2200);
+    applySystemConfiguration();
+    initSpaRouter();
+    renderTransactionsList();
+    renderCardsStack();
+    bindInteractiveEvents();
 });
 
-// Настройка темы
-function initTheme() {
+// Инициализация конфигурации
+function applySystemConfiguration() {
     document.body.className = state.theme;
-    const toggleBtn = document.getElementById('theme-toggle');
-    if (toggleBtn) {
-        toggleBtn.innerHTML = state.theme === 'dark-theme' ? 
-            `<i class="material-icons-round">light_mode</i>` : `<i class="material-icons-round">dark_mode</i>`;
+    
+    // Выставляем чекбоксы в интерфейсе
+    document.getElementById('toggle-theme').checked = (state.theme === 'dark-theme');
+    document.getElementById('toggle-sound').checked = state.soundEnabled;
+    document.getElementById('toggle-vibration').checked = state.vibeEnabled;
+    
+    // Обновляем базовый вид главной карты
+    if(state.cards.length > 0) {
+        updateMainCardDisplay(state.cards[0]);
     }
 }
 
-// Рендеринг транзакций
-function renderTransactions() {
-    const container = document.getElementById('transaction-container');
-    if (!container) return;
-    
-    container.innerHTML = state.transactions.map(tx => `
-        <div class="transaction-item">
-            <div class="tx-left">
-                <div class="tx-icon"><i class="material-icons-round">${tx.icon}</i></div>
-                <div class="tx-info">
-                    <h4>${tx.merchant}</h4>
-                    <span>${tx.date}</span>
-                </div>
-            </div>
-            <div class="tx-amount ${tx.amount.startsWith('+') ? '' : 'negative'}">${tx.amount}</div>
-        </div>
-    `).join('');
-}
-
-// Навигация (SPA)
-function setupNavigation() {
-    const navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(item => {
-        item.addEventListener('click', (e) => {
-            const currentItem = e.currentTarget;
-            const targetViewId = currentItem.getAttribute('data-target');
+// Роутинг без задержек (SPA)
+function initSpaRouter() {
+    const navButtons = document.querySelectorAll('.nav-btn');
+    navButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const targetView = e.currentTarget.getAttribute('data-view');
             
-            navItems.forEach(btn => btn.classList.remove('active'));
-            currentItem.classList.add('active');
+            navButtons.forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
             
-            document.querySelectorAll('.app-view').forEach(view => view.classList.remove('active'));
-            const targetView = document.getElementById(targetViewId);
-            if (targetView) targetView.classList.add('active');
+            e.currentTarget.classList.add('active');
+            document.getElementById(targetView).classList.add('active');
+            
+            triggerHapticFeedback(15); // Лёгкий клик при переходе
         });
     });
 }
 
-// Обработчики событий
-function setupEventHandlers() {
-    // Вход в приложение
-    const btnBiometric = document.getElementById('btn-biometric');
-    const btnDemoLogin = document.getElementById('btn-demo-login');
-    
-    if (btnBiometric) btnBiometric.addEventListener('click', runBiometricAuth);
-    if (btnDemoLogin) btnDemoLogin.addEventListener('click', runBiometricAuth);
-
-    // Переключение темы
-    const themeToggle = document.getElementById('theme-toggle');
-    if (themeToggle) {
-        themeToggle.addEventListener('click', () => {
-            state.theme = state.theme === 'dark-theme' ? 'light-theme' : 'dark-theme';
-            localStorage.setItem('aura-theme', state.theme);
-            initTheme();
-        });
-    }
-
+// Связывание событий
+function bindInteractiveEvents() {
     // Поворот карты
-    const btnFlip = document.getElementById('btn-flip');
-    if (btnFlip) {
-        btnFlip.addEventListener('click', () => {
-            const card = document.getElementById('main-card');
-            if (card) card.classList.toggle('flipped');
-        });
-    }
+    document.getElementById('btn-flip-card').addEventListener('click', () => {
+        document.getElementById('main-card').classList.toggle('flipped');
+        triggerHapticFeedback(20);
+    });
 
-    // NFC Оплата
-    const btnPayNfc = document.getElementById('btn-pay-nfc');
-    if (btnPayNfc) btnPayNfc.addEventListener('click', triggerNFCPaymentProcess);
-    
-    const closeNfcBtn = document.getElementById('close-nfc-btn');
-    if (closeNfcBtn) {
-        closeNfcBtn.addEventListener('click', () => {
-            document.getElementById('nfc-overlay').classList.remove('active');
-        });
-    }
+    // Кнопка оплаты (Поднести к терминалу)
+    document.getElementById('btn-pay-terminal').addEventListener('click', triggerNFCEmulationProcess);
+    document.getElementById('btn-cancel-nfc').addEventListener('click', () => {
+        document.getElementById('overlay-nfc').classList.remove('active');
+    });
 
-    // Закрытие экрана успеха
-    const btnSuccessClose = document.getElementById('btn-success-close');
-    if (btnSuccessClose) {
-        btnSuccessClose.addEventListener('click', () => {
-            document.getElementById('success-overlay').classList.remove('active');
-        });
-    }
+    document.getElementById('btn-close-success').addEventListener('click', () => {
+        document.getElementById('overlay-success').classList.remove('active');
+    });
 
-    // Добавление карты
-    const addCardForm = document.getElementById('add-card-form');
-    if (addCardForm) addCardForm.addEventListener('submit', handleAddCard);
+    // Обработка создания новой карты
+    document.getElementById('card-creation-form').addEventListener('submit', handleFormSubmitCard);
 
-    // Очистка кэша
-    const btnClearCache = document.getElementById('btn-clear-cache');
-    if (btnClearCache) {
-        btnClearCache.addEventListener('click', () => {
-            localStorage.clear();
-            showNotification('Данные очищены', 'Приложение перезагрузится');
-            setTimeout(() => location.reload(), 1500);
+    // Настройки
+    document.getElementById('toggle-theme').addEventListener('change', (e) => {
+        state.theme = e.target.checked ? 'dark-theme' : 'light-theme';
+        localStorage.setItem('aura_theme', state.theme);
+        document.body.className = state.theme;
+        triggerHapticFeedback(30);
+    });
+
+    document.getElementById('toggle-sound').addEventListener('change', (e) => {
+        state.soundEnabled = e.target.checked;
+        localStorage.setItem('aura_sound', state.soundEnabled);
+    });
+
+    document.getElementById('toggle-vibration').addEventListener('change', (e) => {
+        state.vibeEnabled = e.target.checked;
+    });
+
+    // Аккордеон FAQ
+    document.querySelectorAll('.accordion-header').forEach(header => {
+        header.addEventListener('click', (e) => {
+            const item = e.currentTarget.parentElement;
+            item.classList.toggle('open');
+            triggerHapticFeedback(20);
         });
-    }
+    });
+
+    // Поддержка по SMS
+    document.getElementById('btn-support-sms').addEventListener('click', () => {
+        window.location.href = "sms:+79635307955?body=Здравствуйте, у меня вопрос по приложению Aura Wallet:";
+    });
 }
 
-// Биометрия
-function runBiometricAuth() {
-    const btn = document.getElementById('btn-biometric');
-    if (btn) btn.innerText = "Проверка...";
-    
-    setTimeout(() => {
-        state.isAuth = true;
-        document.getElementById('auth-screen').classList.remove('active');
-        document.getElementById('auth-screen').style.display = 'none';
-        document.getElementById('app-container').classList.remove('hidden');
-        showNotification('Доступ разрешен', 'Добро пожаловать в Aura Wallet');
-    }, 1000);
-}
-
-// Симуляция NFC
-function triggerNFCPaymentProcess() {
-    if (state.cards.length === 0) {
-        showNotification('Ошибка оплаты', 'Сначала добавьте платежную карту');
+// Эмуляция бесконтактного списания (HCE)
+function triggerNFCEmulationProcess() {
+    if(state.cards.length === 0) {
+        alert("Пожалуйста, добавьте карту во вкладке Добавить");
         return;
     }
     
     const activeCard = state.cards[0];
-    document.getElementById('nfc-card-name').innerText = activeCard.type;
-    document.getElementById('nfc-card-num').innerText = activeCard.number.slice(-9);
+    document.getElementById('nfc-preview-digits').innerText = activeCard.maskNumber;
     
-    document.getElementById('nfc-overlay').classList.add('active');
-
+    // Показываем радар
+    document.getElementById('overlay-nfc').classList.add('active');
+    
+    // Цикл удержания у воображаемого терминала (2.5 сек)
     setTimeout(() => {
-        document.querySelector('.status-text').innerText = "Передача данных токена...";
+        document.getElementById('overlay-nfc').classList.remove('active');
         
-        setTimeout(() => {
-            document.getElementById('nfc-overlay').classList.remove('active');
-            
-            const sum = (Math.random() * 1500 + 50).toFixed(2);
-            const merchants = ['Перекресток', 'ВкусВилл', 'Яндекс Такси', 'Додо Пицца'];
-            const randomMerchant = merchants[Math.floor(Math.random() * merchants.length)];
-            
-            const newTx = {
-                id: Date.now(),
-                merchant: randomMerchant,
-                amount: `- ${sum} ₽`,
-                date: 'Сегодня, только что',
-                icon: 'payment'
-            };
-            state.transactions.unshift(newTx);
-            localStorage.setItem('aura-tx', JSON.stringify(state.transactions));
-            renderTransactions();
-
-            document.getElementById('success-amount').innerText = `- ${sum} ₽`;
-            document.getElementById('success-merchant-name').innerText = randomMerchant;
-            document.getElementById('success-overlay').classList.add('active');
-            
-            document.querySelector('.status-text').innerText = "Поднесите smartphone к терминалу";
-        }, 1500);
+        // Генерация чека покупки
+        const finalCost = (Math.random() * 1800 + 45).toFixed(2) + " ₽";
+        const randomStores = ["Супермаркет Магнит", "ВкусВилл", "Ресторан Вкусно и точка", "Яндекс Такси", "АЗС Газпромнефть"];
+        const chosenStore = randomStores[Math.floor(Math.random() * randomStores.length)];
+        
+        // Обновление DOM чека
+        document.getElementById('receipt-amount').innerText = `- ${finalCost}`;
+        document.getElementById('receipt-merchant').innerText = chosenStore;
+        
+        // Включение окна успешного завершения
+        document.getElementById('overlay-success').classList.add('active');
+        
+        // Сигналы
+        triggerHapticFeedback([100, 50, 100]); // Двойной сильный виброотклик терминала
+        playTransactionSound();
+        
+        // Добавляем в историю
+        const currentTimestamp = "Сегодня, " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        state.txHistory.unshift({ id: Date.now(), store: chosenStore, cost: `- ${finalCost}`, date: currentTimestamp });
+        renderTransactionsList();
+        
     }, 2500);
 }
 
-// Добавление карты
-function handleAddCard(e) {
+// Сохранение карты
+function handleFormSubmitCard(e) {
     e.preventDefault();
     
-    const rawNumber = document.getElementById('input-card-number').value.replace(/\s/g, '');
-    const expiry = document.getElementById('input-card-expiry').value;
-    const holder = document.getElementById('input-card-holder').value;
+    const rawNumber = document.getElementById('form-card-num').value.replace(/\s/g, '');
+    const expiry = document.getElementById('form-card-exp').value;
+    const holder = document.getElementById('form-card-holder').value.toUpperCase();
     
-    if (rawNumber.length < 16) {
-        showNotification('Ошибка', 'Некорректный номер карты');
+    if(rawNumber.length < 16) {
+        alert("Номер карты должен содержать не менее 16 цифр");
         return;
     }
 
-    const last4 = rawNumber.slice(-4);
-    const tokenizedMask = `•••• •••• •••• ${last4}`;
-
-    const newCard = {
-        id: Date.now(),
-        type: 'AURA DIGITAL',
-        number: tokenizedMask,
-        holder: holder.toUpperCase(),
-        expiry: expiry,
-        rawNumber: rawNumber
-    };
-
-    state.cards.unshift(newCard);
-    localStorage.setItem('aura-cards', JSON.stringify(state.cards));
+    const masked = `•••• •••• •••• ${rawNumber.slice(-4)}`;
+    const newCardObj = { id: Date.now(), holder, expiry, maskNumber: masked };
     
-    document.querySelector('.bank-name').innerText = newCard.type;
-    document.querySelector('.card-number').innerText = newCard.number;
-    document.querySelector('.card-holder').innerText = newCard.holder;
-    document.querySelector('.card-expiry').innerText = newCard.expiry;
-
-    showNotification('Успешно', 'Карта добавлена в Aura Pay');
-    document.getElementById('add-card-form').reset();
+    state.cards.unshift(newCardObj);
+    localStorage.setItem('aura_cards', JSON.stringify(state.cards));
     
-    document.querySelector('.nav-item[data-target="view-wallet"]').click();
+    renderCardsStack();
+    updateMainCardDisplay(newCardObj);
+    document.getElementById('card-creation-form').reset();
+    
+    // Перебрасываем на экран кошелька
+    document.querySelector('.nav-btn[data-view="view-main"]').click();
 }
 
-// Оповещения
-function showNotification(title, message) {
-    const toast = document.getElementById('toast-notification');
-    if (!toast) return;
-    document.getElementById('toast-title').innerText = title;
-    document.getElementById('toast-message').innerText = message;
+// Удаление карты
+function deleteSavedCard(id) {
+    state.cards = state.cards.filter(c => c.id !== id);
+    localStorage.setItem('aura_cards', JSON.stringify(state.cards));
+    renderCardsStack();
     
-    toast.classList.add('active');
-    setTimeout(() => {
-        toast.classList.remove('active');
-    }, 3000);
+    if(state.cards.length > 0) {
+        updateMainCardDisplay(state.cards[0]);
+    } else {
+        document.getElementById('display-card-number').innerText = "НЕТ ДОСТУПНЫХ КАРТ";
+        document.getElementById('display-card-holder').innerText = "EMPTY";
+        document.getElementById('display-card-expiry').innerText = "••/••";
+    }
+    triggerHapticFeedback(60);
 }
 
-// АВТОМАТИЧЕСКАЯ РЕГИСТРАЦИЯ SERVICE WORKER
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-            .then(reg => console.log('Service Worker зарегистрирован!', reg.scope))
-            .catch(err => console.error('Ошибка Service Worker:', err));
-    });
+// Хелперы рендеринга
+function updateMainCardDisplay(card) {
+    document.getElementById('display-card-number').innerText = card.maskNumber;
+    document.getElementById('display-card-holder').innerText = card.holder;
+    document.getElementById('display-card-expiry').innerText = card.expiry;
+}
+
+function renderCardsStack() {
+    const box = document.getElementById('wallet-cards-container');
+    if(!box) return;
+    
+    if(state.cards.length === 0) {
+        box.innerHTML = `<div style="text-align:center; padding:30px; color:var(--text-muted);">Нет привязанных карт</div>`;
+        return;
+    }
+    
+    box.innerHTML = state.cards.map(c => `
+        <div class="saved-card-item">
+            <div class="sc-meta">
+                <h4>${c.holder}</h4>
+                <p>${c.maskNumber}</p>
+            </div>
+            <button class="btn-delete-card" onclick="deleteSavedCard(${c.id})">
+                <i class="material-icons-round">delete</i>
+            </button>
+        </div>
+    `).join('');
+}
+
+function renderTransactionsList() {
+    const list = document.getElementById('main-tx-container');
+    if(!list) return;
+    list.innerHTML = state.txHistory.map(t => `
+        <div class="tx-card">
+            <div class="tx-info-block">
+                <div class="tx-icon-frame"><i class="material-icons-round">payment</i></div>
+                <div class="tx-text">
+                    <h4>${t.store}</h4>
+                    <span>${t.date}</span>
+                </div>
+            </div>
+            <div class="tx-value">${t.cost}</div>
+        </div>
+    `).join('');
+}
+
+// Локальный синтез звука (Web Audio API)
+function playTransactionSound() {
+    if(!state.soundEnabled) return;
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Высокий чистый тон
+        gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        
+        oscillator.start();
+        // Плавное затухание
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+        oscillator.stop(audioCtx.currentTime + 0.4);
+    } catch(e) {
+        console.log("Audio API не поддерживается текущим браузером");
+    }
+}
+
+// Виброотклик через Нативный интерфейс Android (Vibration API)
+function triggerHapticFeedback(pattern) {
+    if (state.vibeEnabled && 'vibrate' in navigator) {
+        navigator.vibrate(pattern);
+    }
 }
