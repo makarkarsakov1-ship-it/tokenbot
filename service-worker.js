@@ -1,37 +1,125 @@
-const CACHE_ID = 'aura-pay-v2';
-const CORE_ASSETS = [
-  './',
-  './index.html',
-  './style.css',
-  './app.js',
-  './manifest.json',
-  'https://fonts.googleapis.com/icon?family=Material+Icons+Round'
+/* ============================================
+   AURA WALLET — Service Worker
+   Версия кэша: v1.0
+   ============================================ */
+
+const CACHE_NAME = 'aura-wallet-v1.0';
+const STATIC_CACHE = 'aura-static-v1.0';
+
+// Файлы для кэширования
+const ASSETS_TO_CACHE = [
+  '/index.html',
+  '/style.css',
+  '/app.js',
+  '/manifest.json'
 ];
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_ID).then((cache) => {
-      return cache.addAll(CORE_ASSETS);
+// === УСТАНОВКА ===
+self.addEventListener('install', (event) => {
+  console.log('[SW] Установка Service Worker...');
+  event.waitUntil(
+    caches.open(STATIC_CACHE).then((cache) => {
+      console.log('[SW] Кэширование статических ресурсов');
+      return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
+        console.warn('[SW] Некоторые ресурсы не удалось закэшировать:', err);
+      });
     })
   );
+  self.skipWaiting();
 });
 
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) => {
+// === АКТИВАЦИЯ ===
+self.addEventListener('activate', (event) => {
+  console.log('[SW] Активация Service Worker...');
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
       return Promise.all(
-        keys.map((k) => {
-          if (k !== CACHE_ID) return caches.delete(k);
-        })
+        cacheNames
+          .filter((name) => name !== STATIC_CACHE && name !== CACHE_NAME)
+          .map((name) => {
+            console.log('[SW] Удаление старого кэша:', name);
+            return caches.delete(name);
+          })
       );
     })
   );
+  self.clients.claim();
 });
 
-self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((res) => {
-      return res || fetch(e.request);
+// === ПЕРЕХВАТ ЗАПРОСОВ (Cache First strategy) ===
+self.addEventListener('fetch', (event) => {
+  // Пропускаем не-GET запросы и API
+  if (event.request.method !== 'GET') return;
+  if (event.request.url.includes('/api/')) return;
+
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        // Возвращаем из кэша и обновляем в фоне
+        fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            caches.open(STATIC_CACHE).then((cache) => {
+              cache.put(event.request, networkResponse.clone());
+            });
+          }
+        }).catch(() => {});
+        return cachedResponse;
+      }
+
+      // Если нет в кэше — загружаем из сети
+      return fetch(event.request).then((networkResponse) => {
+        if (!networkResponse || networkResponse.status !== 200) {
+          return networkResponse;
+        }
+        const responseToCache = networkResponse.clone();
+        caches.open(STATIC_CACHE).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
+        return networkResponse;
+      }).catch(() => {
+        // Оффлайн-фоллбэк
+        if (event.request.destination === 'document') {
+          return caches.match('/index.html');
+        }
+      });
     })
   );
 });
+
+// === PUSH УВЕДОМЛЕНИЯ (Mock) ===
+self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.json() : {};
+  const options = {
+    body: data.body || 'Новое уведомление от AURA',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/badge.png',
+    vibrate: [100, 50, 100],
+    data: { url: data.url || '/' },
+    actions: [
+      { action: 'open', title: 'Открыть' },
+      { action: 'dismiss', title: 'Закрыть' }
+    ]
+  };
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'AURA Wallet', options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  if (event.action === 'open') {
+    event.waitUntil(clients.openWindow(event.notification.data.url));
+  }
+});
+
+// === BACKGROUND SYNC (Mock для будущей интеграции) ===
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-transactions') {
+    event.waitUntil(syncTransactions());
+  }
+});
+
+async function syncTransactions() {
+  // TODO: Синхронизация с банковским бэкендом
+  console.log('[SW] Background sync транзакций...');
+}
