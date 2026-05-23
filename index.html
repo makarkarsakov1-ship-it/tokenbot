@@ -156,6 +156,10 @@
             <div class="quick-action-icon">📲</div>
             <span class="quick-action-label">Оплатить</span>
           </div>
+          <div class="quick-action" onclick="PhonePayController.open()" style="background:linear-gradient(135deg,rgba(0,214,143,0.12),rgba(0,214,143,0.04));border-color:rgba(0,214,143,0.22)">
+            <div class="quick-action-icon">📱</div>
+            <span class="quick-action-label">Телефон</span>
+          </div>
           <div class="quick-action" onclick="Toast.show('Перевод', 'Функция перевода денег', '💸')">
             <div class="quick-action-icon">💸</div>
             <span class="quick-action-label">Перевод</span>
@@ -251,31 +255,206 @@
           </div>
         </div>
 
-        <!-- Настройки -->
-        <div class="section-sep">Аккаунт</div>
+        <!-- === РАСШИРЕННЫЕ НАСТРОЙКИ === -->
+
+        <!-- АККАУНТ -->
+        <div class="section-sep">👤 Аккаунт</div>
         <div class="settings-list">
-          <div class="settings-item" onclick="Toast.show('Профиль', 'Редактирование профиля', '👤')">
-            <div class="settings-icon" style="background: rgba(123,46,255,0.15)">👤</div>
+          <div class="settings-item" onclick="SettingsModal.show('personal')">
+            <div class="settings-icon" style="background:rgba(123,46,255,0.15)">👤</div>
             <div class="settings-text">
               <div class="settings-label">Личные данные</div>
-              <div class="settings-desc">Имя, телефон, email</div>
+              <div class="settings-desc">Имя, телефон, дата рождения</div>
             </div>
             <span class="settings-arrow">›</span>
           </div>
-          <div class="settings-item" onclick="Toast.show('Безопасность', 'Управление безопасностью', '🔐')">
-            <div class="settings-icon" style="background: rgba(0,214,143,0.15)">🔐</div>
+          <div class="settings-item" onclick="SettingsModal.show('verify')">
+            <div class="settings-icon" style="background:rgba(0,214,143,0.15)">✅</div>
             <div class="settings-text">
-              <div class="settings-label">Безопасность</div>
-              <div class="settings-desc">PIN, биометрия, пароль</div>
+              <div class="settings-label">Верификация KYC</div>
+              <div class="settings-desc">Паспорт подтверждён · Level 2</div>
+            </div>
+            <div class="settings-badge" style="background:rgba(0,214,143,0.15);color:var(--success)">KYC ✓</div>
+          </div>
+          <div class="settings-item" onclick="SettingsModal.show('referral')">
+            <div class="settings-icon" style="background:rgba(255,170,0,0.15)">🎁</div>
+            <div class="settings-text">
+              <div class="settings-label">Реферальная программа</div>
+              <div class="settings-desc">Пригласи друга — получи 500 ₽</div>
             </div>
             <span class="settings-arrow">›</span>
           </div>
         </div>
 
-        <div class="section-sep">Внешний вид</div>
+        <!-- БЕЗОПАСНОСТЬ -->
+        <div class="section-sep">🔐 Безопасность</div>
+        <div class="settings-list">
+          <div class="settings-item" onclick="SettingsModal.show('pin')">
+            <div class="settings-icon" style="background:rgba(123,46,255,0.15)">🔢</div>
+            <div class="settings-text">
+              <div class="settings-label">Изменить PIN-код</div>
+              <div class="settings-desc">4 или 6 цифр для входа</div>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon" style="background:rgba(0,214,143,0.15)">👤</div>
+            <div class="settings-text">
+              <div class="settings-label">Face ID</div>
+              <div class="settings-desc">Вход по лицу</div>
+            </div>
+            <div class="toggle-switch on" onclick="SettingsController.toggle(this,'faceid')"><div class="toggle-knob"></div></div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon" style="background:rgba(0,214,143,0.15)">👆</div>
+            <div class="settings-text">
+              <div class="settings-label">Touch ID</div>
+              <div class="settings-desc">Отпечаток пальца</div>
+            </div>
+            <div class="toggle-switch" onclick="SettingsController.toggle(this,'touchid')"><div class="toggle-knob"></div></div>
+          </div>
+          <div class="settings-item" onclick="SettingsModal.show('2fa')">
+            <div class="settings-icon" style="background:rgba(255,170,0,0.15)">🛡️</div>
+            <div class="settings-text">
+              <div class="settings-label">Двухфакторная защита</div>
+              <div class="settings-desc">SMS или приложение-аутентификатор</div>
+            </div>
+            <div class="settings-badge" style="background:rgba(255,170,0,0.15);color:var(--warning)">2FA</div>
+          </div>
+          <div class="settings-item" onclick="SettingsModal.show('sessions')">
+            <div class="settings-icon" style="background:rgba(255,77,106,0.15)">📍</div>
+            <div class="settings-text">
+              <div class="settings-label">Активные сессии</div>
+              <div class="settings-desc">iPhone 12 · Москва · сейчас</div>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
+        </div>
+
+        <!-- ПЛАТЕЖИ -->
+        <div class="section-sep">💳 Платежи и лимиты</div>
+        <div class="settings-list">
+          <div class="settings-item" onclick="SettingsModal.show('limits')">
+            <div class="settings-icon" style="background:rgba(123,46,255,0.15)">📊</div>
+            <div class="settings-text">
+              <div class="settings-label">Лимиты операций</div>
+              <div class="settings-desc">Дневной лимит: 100 000 ₽</div>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon" style="background:rgba(0,214,143,0.15)">🔄</div>
+            <div class="settings-text">
+              <div class="settings-label">Автоплатежи</div>
+              <div class="settings-desc">ЖКХ, интернет, телефон</div>
+            </div>
+            <div class="toggle-switch on" onclick="SettingsController.toggle(this,'autopay')"><div class="toggle-knob"></div></div>
+          </div>
+          <div class="settings-item" onclick="SettingsModal.show('sbp')">
+            <div class="settings-icon" style="background:rgba(255,170,0,0.15)">⚡</div>
+            <div class="settings-text">
+              <div class="settings-label">Система быстрых платежей</div>
+              <div class="settings-desc">СБП подключён · банк по умолчанию</div>
+            </div>
+            <div class="settings-badge" style="background:rgba(255,170,0,0.15);color:var(--warning)">СБП</div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon" style="background:rgba(123,46,255,0.15)">📱</div>
+            <div class="settings-text">
+              <div class="settings-label">Оплата наклоном телефона</div>
+              <div class="settings-desc">Подтверждение гироскопом</div>
+            </div>
+            <div class="toggle-switch on" onclick="SettingsController.toggle(this,'tiltpay')"><div class="toggle-knob"></div></div>
+          </div>
+          <div class="settings-item" onclick="SettingsModal.show('split')">
+            <div class="settings-icon" style="background:rgba(255,77,106,0.15)">🍕</div>
+            <div class="settings-text">
+              <div class="settings-label">Разделить счёт</div>
+              <div class="settings-desc">Поровну между друзьями</div>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
+          <div class="settings-item" onclick="SettingsModal.show('cashback')">
+            <div class="settings-icon" style="background:rgba(0,214,143,0.15)">💰</div>
+            <div class="settings-text">
+              <div class="settings-label">Кэшбэк и бонусы</div>
+              <div class="settings-desc">До 5% на покупки · 2 340 ₽ накоплено</div>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
+        </div>
+
+        <!-- УВЕДОМЛЕНИЯ -->
+        <div class="section-sep">🔔 Уведомления</div>
         <div class="settings-list">
           <div class="settings-item">
-            <div class="settings-icon" style="background: rgba(123,46,255,0.15)">🌙</div>
+            <div class="settings-icon" style="background:rgba(123,46,255,0.15)">📲</div>
+            <div class="settings-text">
+              <div class="settings-label">Push-уведомления</div>
+              <div class="settings-desc">Все операции по карте</div>
+            </div>
+            <div class="toggle-switch on" onclick="SettingsController.toggle(this,'push')"><div class="toggle-knob"></div></div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon" style="background:rgba(0,214,143,0.15)">💬</div>
+            <div class="settings-text">
+              <div class="settings-label">SMS-уведомления</div>
+              <div class="settings-desc">Платные — 59 ₽/мес</div>
+            </div>
+            <div class="toggle-switch" onclick="SettingsController.toggle(this,'sms')"><div class="toggle-knob"></div></div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon" style="background:rgba(255,170,0,0.15)">📧</div>
+            <div class="settings-text">
+              <div class="settings-label">Email-выписки</div>
+              <div class="settings-desc">Ежемесячно на почту</div>
+            </div>
+            <div class="toggle-switch on" onclick="SettingsController.toggle(this,'email')"><div class="toggle-knob"></div></div>
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon" style="background:rgba(255,77,106,0.15)">🚨</div>
+            <div class="settings-text">
+              <div class="settings-label">Подозрительные операции</div>
+              <div class="settings-desc">Мгновенный алёрт при риске</div>
+            </div>
+            <div class="toggle-switch on" onclick="SettingsController.toggle(this,'fraud')"><div class="toggle-knob"></div></div>
+          </div>
+        </div>
+
+        <!-- КОНФИДЕНЦИАЛЬНОСТЬ -->
+        <div class="section-sep">🔏 Конфиденциальность</div>
+        <div class="settings-list">
+          <div class="settings-item">
+            <div class="settings-icon" style="background:rgba(123,46,255,0.15)">👁️</div>
+            <div class="settings-text">
+              <div class="settings-label">Скрывать баланс</div>
+              <div class="settings-desc">Показывать •••• на главной</div>
+            </div>
+            <div class="toggle-switch" onclick="SettingsController.toggle(this,'hide')"><div class="toggle-knob"></div></div>
+          </div>
+          <div class="settings-item" onclick="SettingsModal.show('export')">
+            <div class="settings-icon" style="background:rgba(0,214,143,0.15)">📥</div>
+            <div class="settings-text">
+              <div class="settings-label">Экспорт данных</div>
+              <div class="settings-desc">CSV, PDF выписка за любой период</div>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
+          <div class="settings-item" onclick="SettingsModal.show('delete')">
+            <div class="settings-icon" style="background:rgba(255,77,106,0.15)">🗑️</div>
+            <div class="settings-text">
+              <div class="settings-label" style="color:var(--danger)">Удалить аккаунт</div>
+              <div class="settings-desc">Необратимое действие</div>
+            </div>
+            <span class="settings-arrow" style="color:var(--danger)">›</span>
+          </div>
+        </div>
+
+        <!-- ВНЕШНИЙ ВИД -->
+        <div class="section-sep">🎨 Внешний вид</div>
+        <div class="settings-list">
+          <div class="settings-item">
+            <div class="settings-icon" style="background:rgba(123,46,255,0.15)">🌙</div>
             <div class="settings-text">
               <div class="settings-label">Тёмная тема</div>
               <div class="settings-desc">Переключить оформление</div>
@@ -284,38 +463,55 @@
               <div class="toggle-knob"></div>
             </div>
           </div>
-          <div class="settings-item" onclick="Toast.show('Язык', 'Русский', '🌍')">
-            <div class="settings-icon" style="background: rgba(255,170,0,0.15)">🌍</div>
+          <div class="settings-item" onclick="Toast.show('Язык', 'Русский — выбран', '🌍')">
+            <div class="settings-icon" style="background:rgba(255,170,0,0.15)">🌍</div>
             <div class="settings-text">
               <div class="settings-label">Язык интерфейса</div>
               <div class="settings-desc">Русский</div>
             </div>
             <span class="settings-arrow">›</span>
           </div>
+          <div class="settings-item" onclick="Toast.show('Валюта', 'Российский рубль ₽', '💱')">
+            <div class="settings-icon" style="background:rgba(0,214,143,0.15)">💱</div>
+            <div class="settings-text">
+              <div class="settings-label">Валюта отображения</div>
+              <div class="settings-desc">Российский рубль (₽)</div>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
         </div>
 
-        <div class="section-sep">Приложение</div>
+        <!-- ПРИЛОЖЕНИЕ -->
+        <div class="section-sep">📱 Приложение</div>
         <div class="settings-list">
           <div class="settings-item" onclick="installPWA()">
-            <div class="settings-icon" style="background: rgba(123,46,255,0.15)">📲</div>
+            <div class="settings-icon" style="background:rgba(123,46,255,0.15)">📲</div>
             <div class="settings-text">
               <div class="settings-label">Установить приложение</div>
               <div class="settings-desc">Добавить на рабочий стол</div>
             </div>
             <span class="settings-arrow">›</span>
           </div>
-          <div class="settings-item" onclick="Toast.show('Уведомления', 'Настройки уведомлений', '🔔')">
-            <div class="settings-icon" style="background: rgba(255,77,106,0.15)">🔔</div>
+          <div class="settings-item" onclick="Toast.show('Поддержка', 'Чат с поддержкой открыт', '💬')">
+            <div class="settings-icon" style="background:rgba(0,214,143,0.15)">💬</div>
             <div class="settings-text">
-              <div class="settings-label">Уведомления</div>
-              <div class="settings-desc">Push, SMS, email</div>
+              <div class="settings-label">Служба поддержки</div>
+              <div class="settings-desc">Чат · звонок · FAQ</div>
+            </div>
+            <span class="settings-arrow">›</span>
+          </div>
+          <div class="settings-item" onclick="SettingsModal.show('about')">
+            <div class="settings-icon" style="background:rgba(123,46,255,0.15)">ℹ️</div>
+            <div class="settings-text">
+              <div class="settings-label">О приложении</div>
+              <div class="settings-desc">Версия 1.0 · Лицензии · Changelog</div>
             </div>
             <span class="settings-arrow">›</span>
           </div>
           <div class="settings-item" onclick="AuthController.logout()">
-            <div class="settings-icon" style="background: rgba(255,77,106,0.15)">🚪</div>
+            <div class="settings-icon" style="background:rgba(255,77,106,0.15)">🚪</div>
             <div class="settings-text">
-              <div class="settings-label" style="color: var(--danger)">Выйти из аккаунта</div>
+              <div class="settings-label" style="color:var(--danger)">Выйти из аккаунта</div>
             </div>
           </div>
         </div>
@@ -529,12 +725,104 @@
   </div>
   <!-- END ADD CARD SCREEN -->
 
+
+  <!-- ==================== PHONE PAY SCREEN ==================== -->
+  <div id="screen-phone-pay" class="screen">
+    <!-- Video background -->
+    <video id="phone-pay-video" class="phone-pay-video" autoplay muted loop playsinline>
+      <source src="https://assets.mixkit.co/videos/preview/mixkit-abstract-technology-particles-in-blue-and-purple-4496-large.mp4" type="video/mp4">
+    </video>
+    <div class="phone-pay-overlay"></div>
+
+    <!-- Status bar -->
+    <div class="app-status-bar" style="position:relative;z-index:6">
+      <span class="status-time">12:00</span>
+      <div class="status-icons"><span>🔋</span></div>
+    </div>
+
+    <!-- Header -->
+    <div class="pay-header" style="position:relative;z-index:6">
+      <div class="back-btn" onclick="PhonePayController.cancel()">←</div>
+      <div class="pay-header-title">Оплата телефоном</div>
+    </div>
+
+    <!-- Input step -->
+    <div class="phone-pay-content" id="phone-pay-step-input">
+      <div class="phone-pay-title">Введите сумму</div>
+      <div class="phone-pay-subtitle">Затем наклоните телефон вперёд для оплаты</div>
+
+      <!-- Amount field -->
+      <div class="phone-pay-amount-wrap">
+        <div class="phone-pay-currency">₽</div>
+        <input id="phone-pay-amount-input" class="phone-pay-amount-input"
+               type="number" inputmode="numeric" placeholder="0" min="1" max="999999">
+      </div>
+
+      <!-- Card row -->
+      <div class="phone-pay-card-row">
+        <div class="phone-pay-card-dot"></div>
+        <span id="phone-pay-card-label">•••• 9012 · AURA Platinum</span>
+      </div>
+
+      <!-- Tilt indicator -->
+      <div class="tilt-indicator">
+        <div class="tilt-phone-wrap" id="tilt-phone-wrap">
+          <span>📱</span>
+        </div>
+        <div class="tilt-bar-wrap">
+          <div class="tilt-bar-track">
+            <div class="tilt-bar-fill" id="tilt-bar-fill"></div>
+          </div>
+          <div class="tilt-labels">
+            <span>Наклон</span>
+            <span id="tilt-pct">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hint -->
+      <div class="phone-pay-hint" id="tilt-hint">🔄 Наклоните телефон вперёд для оплаты</div>
+
+      <!-- Hold button (fallback / demo) -->
+      <button class="tilt-hold-btn" id="tilt-hold-btn">📱 Удерживайте для оплаты</button>
+
+      <!-- Cancel -->
+      <button class="btn-secondary" style="width:100%" onclick="PhonePayController.cancel()">Отмена</button>
+    </div>
+
+    <!-- Success overlay (hidden by default) -->
+    <div class="phone-pay-success" id="phone-pay-success" style="display:none">
+      <div class="pps-confetti" id="pps-confetti"></div>
+      <div class="pps-amount" id="pps-amount">0 ₽</div>
+      <div class="pps-check-wrap">
+        <svg class="pps-circle" viewBox="0 0 120 120">
+          <circle class="pps-circle-track" cx="60" cy="60" r="54"/>
+          <circle class="pps-circle-fill" cx="60" cy="60" r="54" id="pps-circle-fill"/>
+        </svg>
+        <div class="pps-checkmark" id="pps-checkmark">✓</div>
+      </div>
+      <div class="pps-label" id="pps-label">Успешно!</div>
+      <div class="pps-sub">Оплата прошла успешно</div>
+      <button class="btn-primary" style="width:260px;margin-top:4px"
+              onclick="PhonePayController.goHome()">На главную</button>
+    </div>
+  </div>
+  <!-- END PHONE PAY SCREEN -->
+
 </div>
 <!-- END APP -->
 
 <!-- ============================================================
      MODALS
      ============================================================ -->
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="modal-overlay">
+  <div class="modal-sheet" style="max-height:70vh;overflow-y:auto">
+    <div class="modal-handle"></div>
+    <div id="settings-modal-body" style="padding-bottom:8px"></div>
+  </div>
+</div>
 
 <!-- Biometric Modal -->
 <div id="biometric-modal" class="modal-overlay">
@@ -603,4 +891,4 @@ function filterHistory(category, el) {
 
 <script src="app.js"></script>
 </body>
-    </html>
+          </html>
