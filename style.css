@@ -2095,3 +2095,396 @@ body {
   from { transform: scale(0.8); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* ============================================================
+   PHONE PAY SCREEN
+   ============================================================ */
+
+/* Видео фон */
+.phone-pay-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+
+.phone-pay-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(10,10,15,0.55) 0%,
+    rgba(10,10,15,0.35) 40%,
+    rgba(10,10,15,0.75) 75%,
+    rgba(10,10,15,0.97) 100%
+  );
+  z-index: 1;
+}
+
+#screen-phone-pay {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Контент поверх видео */
+.phone-pay-content {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 24px;
+  flex: 1;
+  gap: 0;
+}
+
+.phone-pay-title {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  margin-top: 20px;
+  margin-bottom: 6px;
+  text-align: center;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+}
+
+.phone-pay-subtitle {
+  font-size: 13px;
+  color: rgba(255,255,255,0.6);
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+/* Поле суммы */
+.phone-pay-amount-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 14px 28px;
+  width: 100%;
+  margin-bottom: 14px;
+  backdrop-filter: blur(12px);
+}
+
+.phone-pay-currency {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.5);
+}
+
+.phone-pay-amount-input {
+  background: none;
+  border: none;
+  outline: none;
+  font-family: var(--font-display);
+  font-size: 42px;
+  font-weight: 800;
+  color: #fff;
+  width: 100%;
+  text-align: left;
+  -moz-appearance: textfield;
+}
+.phone-pay-amount-input::-webkit-outer-spin-button,
+.phone-pay-amount-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.phone-pay-amount-input::placeholder { color: rgba(255,255,255,0.2); }
+
+/* Карта строка */
+.phone-pay-card-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 24px;
+}
+
+.phone-pay-card-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+}
+
+/* Индикатор наклона */
+.tilt-indicator {
+  width: 100%;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 18px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+  backdrop-filter: blur(10px);
+}
+
+.tilt-phone-wrap {
+  font-size: 32px;
+  transition: transform 0.1s ease;
+  transform-origin: bottom center;
+  line-height: 1;
+}
+
+.tilt-bar-wrap {
+  flex: 1;
+}
+
+.tilt-bar-track {
+  height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.tilt-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--success));
+  border-radius: 99px;
+  transition: width 0.15s ease, background 0.3s;
+}
+
+.tilt-bar-fill.done {
+  background: linear-gradient(90deg, var(--success), #00ff9d);
+}
+
+.tilt-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+}
+
+.phone-pay-hint {
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Кнопка удержания */
+.tilt-hold-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 16px;
+  border: none;
+  background: linear-gradient(135deg, var(--success), #009f6b);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 12px;
+  touch-action: none;
+  user-select: none;
+  box-shadow: 0 8px 24px rgba(0,214,143,0.35);
+}
+
+/* ============================================================
+   PHONE PAY SUCCESS OVERLAY
+   ============================================================ */
+.phone-pay-success {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  background: rgba(10,10,15,0.92);
+  backdrop-filter: blur(20px);
+}
+
+.pps-amount {
+  font-family: var(--font-display);
+  font-size: 48px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 32px;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: ppsSlideUp 0.5s 0.1s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+
+.pps-check-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 24px;
+}
+
+.pps-circle {
+  width: 120px;
+  height: 120px;
+  transform: rotate(-90deg);
+}
+
+.pps-circle-track {
+  fill: none;
+  stroke: rgba(255,255,255,0.08);
+  stroke-width: 6;
+}
+
+.pps-circle-fill {
+  fill: none;
+  stroke: var(--success);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 339.3;
+  stroke-dashoffset: 339.3;
+  transition: stroke-dashoffset 0.9s cubic-bezier(0.4,0,0.2,1);
+  filter: drop-shadow(0 0 8px var(--success));
+}
+
+.pps-checkmark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44px;
+  color: var(--success);
+  opacity: 0;
+  transform: scale(0.3);
+  transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  filter: drop-shadow(0 0 16px var(--success));
+}
+
+.pps-checkmark.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.pps-label {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 8px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: all 0.4s 0.9s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+.pps-label.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.pps-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: 32px;
+  opacity: 0;
+  animation: ppsSlideUp 0.5s 1.1s ease forwards;
+}
+
+@keyframes ppsSlideUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Confetti particles */
+.pps-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.confetti-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: confettiFall linear forwards;
+}
+
+@keyframes confettiFall {
+  0%   { opacity: 1; transform: translateY(-20px) rotate(0deg); }
+  100% { opacity: 0; transform: translateY(110vh) rotate(720deg); }
+}
+
+/* ============================================================
+   SETTINGS — расширенные
+   ============================================================ */
+.settings-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+.settings-group-title {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 20px 20px 8px;
+}
+
+/* Settings modal bottom sheet */
+#settings-modal .modal-sheet {
+  max-height: 72vh;
+  overflow-y: auto;
+}
+
+.smodal-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 20px;
+  color: var(--text-primary);
+}
+
+.smodal-field {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.smodal-field:last-child { border-bottom: none; }
+
+.smodal-label { color: var(--text-secondary); }
+.smodal-val   { color: var(--text-primary); font-weight: 600; }
+
+.smodal-action {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.smodal-action.primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.smodal-action.danger {
+  background: rgba(255,77,106,0.12);
+  color: var(--danger);
+}
