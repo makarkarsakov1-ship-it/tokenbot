@@ -973,6 +973,7 @@ function initEventListeners() {
         this.classList.remove('show');
         BiometricAuth.cancel();
         PaymentController.stopNFC();
+        if (typeof SettingsModal !== 'undefined') SettingsModal.close();
       }
     });
   });
@@ -1059,3 +1060,367 @@ async function initApp() {
 
 // Запуск
 document.addEventListener('DOMContentLoaded', initApp);
+
+/* ============================================
+   PHONE PAY CONTROLLER — Tilt to Pay
+   ============================================ */
+const PhonePayController = {
+  _tiltHandler: null,
+  _holdInterval: null,
+  _progress: 0,
+  _done: false,
+
+  open() {
+    this._done = false;
+    this._progress = 0;
+
+    // Show card info
+    const card = AppState.selectedCard || AppState.cards[0];
+    const lbl = document.getElementById('phone-pay-card-label');
+    if (lbl && card) lbl.textContent = '\u2022\u2022\u2022\u2022 ' + card.number.replace(/\s/g,'').slice(-4) + ' \u00b7 ' + card.name;
+
+    // Reset UI
+    const input = document.getElementById('phone-pay-amount-input');
+    if (input) input.value = '';
+    this._setProgress(0);
+    document.getElementById('phone-pay-step-input').style.display = '';
+    document.getElementById('phone-pay-success').style.display = 'none';
+
+    Router.go('phone-pay');
+    this._startTilt();
+    this._bindHoldBtn();
+  },
+
+  _setProgress(pct) {
+    this._progress = pct;
+    const fill = document.getElementById('tilt-bar-fill');
+    const pctEl = document.getElementById('tilt-pct');
+    const phoneWrap = document.getElementById('tilt-phone-wrap');
+    if (fill) {
+      fill.style.width = pct + '%';
+      if (pct >= 100) fill.classList.add('done');
+      else fill.classList.remove('done');
+    }
+    if (pctEl) pctEl.textContent = Math.round(pct) + '%';
+    if (phoneWrap) phoneWrap.style.transform = 'rotate(' + (pct * 0.55) + 'deg)';
+  },
+
+  _startTilt() {
+    if (this._tiltHandler) window.removeEventListener('deviceorientation', this._tiltHandler);
+
+    const handler = (e) => {
+      if (this._done) return;
+      const amount = parseFloat(document.getElementById('phone-pay-amount-input').value);
+      if (!amount || amount <= 0) return;
+
+      // beta: device tilts forward = beta goes negative from 0
+      const beta = e.beta || 0;
+      const forward = Math.max(0, -beta); // 0..60 expected range
+      const pct = Math.min(100, forward / 55 * 100);
+      this._setProgress(pct);
+      if (pct >= 100) this._confirm();
+    };
+
+    this._tiltHandler = handler;
+
+    if (window.DeviceOrientationEvent) {
+      if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        DeviceOrientationEvent.requestPermission()
+          .then(s => { if (s === 'granted') window.addEventListener('deviceorientation', handler); })
+          .catch(() => {}); // fallback: use hold btn
+      } else {
+        window.addEventListener('deviceorientation', handler);
+      }
+    }
+  },
+
+  _bindHoldBtn() {
+    const btn = document.getElementById('tilt-hold-btn');
+    if (!btn) return;
+    btn.onpointerdown = () => {
+      if (this._holdInterval) return;
+      this._holdInterval = setInterval(() => {
+        if (this._done) { clearInterval(this._holdInterval); this._holdInterval = null; return; }
+        const amount = parseFloat(document.getElementById('phone-pay-amount-input').value);
+        if (!amount || amount <= 0) {
+          Toast.show('\u041e\u0448\u0438\u0431\u043a\u0430', '\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0441\u0443\u043c\u043c\u0443', '\u26a0\ufe0f');
+          clearInterval(this._holdInterval); this._holdInterval = null; return;
+        }
+        const newPct = Math.min(100, this._progress + 2.5);
+        this._setProgress(newPct);
+        if (newPct >= 100) {
+          clearInterval(this._holdInterval); this._holdInterval = null;
+          this._confirm();
+        }
+      }, 40);
+    };
+    const stop = () => { clearInterval(this._holdInterval); this._holdInterval = null; };
+    btn.onpointerup = stop;
+    btn.onpointerleave = stop;
+    btn.onpointercancel = stop;
+  },
+
+  async _confirm() {
+    if (this._done) return;
+    this._done = true;
+    if (this._tiltHandler) { window.removeEventListener('deviceorientation', this._tiltHandler); this._tiltHandler = null; }
+
+    const amount = parseFloat(document.getElementById('phone-pay-amount-input').value);
+    const card = AppState.selectedCard || AppState.cards[0];
+
+    Loading.show('\u041e\u0431\u0440\u0430\u0431\u043e\u0442\u043a\u0430 \u043e\u043f\u043b\u0430\u0442\u044b...');
+    await delay(1400);
+    Loading.hide();
+
+    // Add transaction
+    const tx = {
+      id: 'TX_' + generateId(),
+      merchant: '\u041e\u043f\u043b\u0430\u0442\u0430 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u043e\u043c',
+      category: 'payment',
+      amount: -amount,
+      date: '\u0422\u043e\u043b\u044c\u043a\u043e \u0447\u0442\u043e',
+      icon: '\ud83d\udcf1',
+      status: 'completed',
+      authCode: generateId().slice(0,6)
+    };
+    AppState.addTransaction(tx);
+    if (card) { card.balance -= amount; AppState.save(); }
+
+    // Show success
+    document.getElementById('phone-pay-step-input').style.display = 'none';
+    const successEl = document.getElementById('phone-pay-success');
+    successEl.style.display = 'flex';
+
+    // Set amount
+    const amtEl = document.getElementById('pps-amount');
+    if (amtEl) amtEl.textContent = amount.toLocaleString('ru-RU') + ' \u20bd';
+
+    // Animate SVG circle
+    const circle = document.getElementById('pps-circle-fill');
+    if (circle) {
+      const c = 2 * Math.PI * 54;
+      circle.style.strokeDasharray = c;
+      circle.style.strokeDashoffset = c;
+      requestAnimationFrame(() => {
+        circle.style.transition = 'stroke-dashoffset 0.85s cubic-bezier(0.4,0,0.2,1)';
+        circle.style.strokeDashoffset = '0';
+      });
+    }
+
+    setTimeout(() => {
+      const chk = document.getElementById('pps-checkmark');
+      if (chk) chk.classList.add('visible');
+    }, 650);
+
+    setTimeout(() => {
+      const lbl = document.getElementById('pps-label');
+      if (lbl) lbl.classList.add('visible');
+    }, 950);
+
+    // Confetti
+    this._spawnConfetti();
+  },
+
+  _spawnConfetti() {
+    const container = document.getElementById('pps-confetti');
+    if (!container) return;
+    const colors = ['#7B2EFF','#00D68F','#FFAA00','#FF4D6A','#fff'];
+    for (let i = 0; i < 35; i++) {
+      const d = document.createElement('div');
+      d.className = 'confetti-dot';
+      d.style.cssText = [
+        'left:' + (10 + Math.random() * 80) + '%',
+        'top:' + (-10 + Math.random() * 20) + 'px',
+        'background:' + colors[Math.floor(Math.random() * colors.length)],
+        'width:' + (5 + Math.random() * 7) + 'px',
+        'height:' + (5 + Math.random() * 7) + 'px',
+        'border-radius:' + (Math.random() > 0.5 ? '50%' : '2px'),
+        'animation-duration:' + (1.8 + Math.random() * 2.2) + 's',
+        'animation-delay:' + (Math.random() * 0.6) + 's'
+      ].join(';');
+      container.appendChild(d);
+      setTimeout(() => d.remove(), 4000);
+    }
+  },
+
+  cancel() {
+    if (this._tiltHandler) { window.removeEventListener('deviceorientation', this._tiltHandler); this._tiltHandler = null; }
+    if (this._holdInterval) { clearInterval(this._holdInterval); this._holdInterval = null; }
+    this._done = false;
+    Router.back();
+  },
+
+  goHome() {
+    this.cancel();
+    Router.go('main', { replace: true });
+    UI.renderHome();
+  }
+};
+
+/* ============================================
+   SETTINGS CONTROLLER — toggles
+   ============================================ */
+const SettingsController = {
+  toggle(el, key) {
+    const isOn = el.classList.toggle('on');
+    const label = el.previousElementSibling?.querySelector('.settings-label')?.textContent || key;
+    Toast.show(label, isOn ? '\u0412\u043a\u043b\u044e\u0447\u0435\u043d\u043e' : '\u041e\u0442\u043a\u043b\u044e\u0447\u0435\u043d\u043e', isOn ? '\u2705' : '\u274c');
+  }
+};
+
+/* ============================================
+   SETTINGS MODAL
+   ============================================ */
+const SettingsModal = {
+  _content: {
+    personal: {
+      title: '\ud83d\udc64 \u041b\u0438\u0447\u043d\u044b\u0435 \u0434\u0430\u043d\u043d\u044b\u0435',
+      rows: [
+        ['\u0418\u043c\u044f', '\u041c\u0430\u043a\u0441\u0438\u043c \u041e\u0440\u043b\u043e\u0432'],
+        ['\u0422\u0435\u043b\u0435\u0444\u043e\u043d', '+7 (999) 123-45-67'],
+        ['Email', 'max.orlov@mail.ru'],
+        ['\u0414\u0430\u0442\u0430 \u0440\u043e\u0436\u0434\u0435\u043d\u0438\u044f', '15.06.1995'],
+        ['\u0413\u0440\u0430\u0436\u0434\u0430\u043d\u0441\u0442\u0432\u043e', '\ud83c\uddf7\ud83c\uddfa \u0420\u043e\u0441\u0441\u0438\u044f']
+      ]
+    },
+    verify: {
+      title: '\u2705 \u0412\u0435\u0440\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044f KYC',
+      rows: [
+        ['\u041f\u0430\u0441\u043f\u043e\u0440\u0442 \u0420\u0424', '\u2713 \u041f\u043e\u0434\u0442\u0432\u0435\u0440\u0436\u0434\u0451\u043d'],
+        ['\u0421\u041d\u0418\u041b\u0421', '\u2713 \u041f\u0440\u0438\u0432\u044f\u0437\u0430\u043d'],
+        ['\u0418\u041d\u041d', '\u23f3 \u041e\u0436\u0438\u0434\u0430\u0435\u0442'],
+        ['\u0423\u0440\u043e\u0432\u0435\u043d\u044c', 'Level 2 \u2014 \u0434\u043e 600 000 \u20bd/\u0441\u0443\u0442'],
+        ['\u041b\u0438\u043c\u0438\u0442 \u043f\u0435\u0440\u0435\u0432\u043e\u0434\u0430', '150 000 \u20bd/\u043c\u0435\u0441']
+      ]
+    },
+    referral: {
+      title: '\ud83c\udf81 \u0420\u0435\u0444\u0435\u0440\u0430\u043b\u044c\u043d\u0430\u044f \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u0430',
+      rows: [
+        ['\u0412\u0430\u0448 \u043a\u043e\u0434', 'AURA-M4K4R'],
+        ['\u041f\u0440\u0438\u0433\u043b\u0430\u0448\u0435\u043d\u043e \u0434\u0440\u0443\u0437\u0435\u0439', '3'],
+        ['\u0417\u0430\u0440\u0430\u0431\u043e\u0442\u0430\u043d\u043e', '+1 500 \u20bd'],
+        ['\u0411\u043e\u043d\u0443\u0441 \u0437\u0430 \u0434\u0440\u0443\u0433\u0430', '500 \u20bd']
+      ]
+    },
+    pin: {
+      title: '\ud83d\udd22 PIN-\u043a\u043e\u0434',
+      rows: [
+        ['\u0422\u0435\u043a\u0443\u0449\u0438\u0439 PIN', '\u2022\u2022\u2022\u2022\u2022\u2022'],
+        ['\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u044f\u044f \u0441\u043c\u0435\u043d\u0430', '3 \u043d\u0435\u0434\u0435\u043b\u0438 \u043d\u0430\u0437\u0430\u0434'],
+        ['\u0421\u043b\u043e\u0436\u043d\u043e\u0441\u0442\u044c', '\u0412\u044b\u0441\u043e\u043a\u0430\u044f'],
+        ['\u0411\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u043a\u0430 \u043f\u043e\u0441\u043b\u0435', '5 \u043f\u043e\u043f\u044b\u0442\u043e\u043a']
+      ],
+      action: { label: '\u0421\u043c\u0435\u043d\u0438\u0442\u044c PIN', cls: 'primary' }
+    },
+    '2fa': {
+      title: '\ud83d\udee1\ufe0f \u0414\u0432\u0443\u0445\u0444\u0430\u043a\u0442\u043e\u0440\u043d\u0430\u044f \u0437\u0430\u0449\u0438\u0442\u0430',
+      rows: [
+        ['\u0421\u0442\u0430\u0442\u0443\u0441', '\u2705 \u0412\u043a\u043b\u044e\u0447\u0435\u043d\u0430'],
+        ['\u041c\u0435\u0442\u043e\u0434', 'SMS \u043d\u0430 +7 (999) ***-45-67'],
+        ['\u0420\u0435\u0437\u0435\u0440\u0432\u043d\u044b\u0435 \u043a\u043e\u0434\u044b', '8 \u043a\u043e\u0434\u043e\u0432'],
+        ['\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u0435\u0435 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u0438\u0435', '\u0421\u0435\u0433\u043e\u0434\u043d\u044f 10:12']
+      ]
+    },
+    sessions: {
+      title: '\ud83d\udccd \u0410\u043a\u0442\u0438\u0432\u043d\u044b\u0435 \u0441\u0435\u0441\u0441\u0438\u0438',
+      rows: [
+        ['iPhone 12 \u2014 \u041c\u043e\u0441\u043a\u0432\u0430', '\u2022 \u0421\u0435\u0439\u0447\u0430\u0441'],
+        ['Chrome \u2014 \u041c\u043e\u0441\u043a\u0432\u0430', '2 \u0434\u043d\u044f \u043d\u0430\u0437\u0430\u0434'],
+        ['\u0412\u0441\u0435\u0433\u043e \u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432', '2']
+      ],
+      action: { label: '\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044c \u0434\u0440\u0443\u0433\u0438\u0435 \u0441\u0435\u0441\u0441\u0438\u0438', cls: 'danger' }
+    },
+    limits: {
+      title: '\ud83d\udcca \u041b\u0438\u043c\u0438\u0442\u044b',
+      rows: [
+        ['\u0414\u043d\u0435\u0432\u043d\u043e\u0439 \u043b\u0438\u043c\u0438\u0442', '100 000 \u20bd'],
+        ['\u041e\u0434\u043d\u0430 \u043e\u043f\u0435\u0440\u0430\u0446\u0438\u044f', '30 000 \u20bd'],
+        ['\u0411\u0435\u0437 \u043f\u0438\u043d-\u043a\u043e\u0434\u0430', '\u0434\u043e 3 000 \u20bd'],
+        ['\u041c\u0435\u0441\u044f\u0447\u043d\u043e', '500 000 \u20bd'],
+        ['\u0418\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043d\u043e \u0441\u0435\u0433\u043e\u0434\u043d\u044f', '4 200 \u20bd / 100 000 \u20bd']
+      ],
+      action: { label: '\u0418\u0437\u043c\u0435\u043d\u0438\u0442\u044c \u043b\u0438\u043c\u0438\u0442\u044b', cls: 'primary' }
+    },
+    sbp: {
+      title: '\u26a1 \u0421\u0411\u041f',
+      rows: [
+        ['\u0421\u0442\u0430\u0442\u0443\u0441', '\u2705 \u041f\u043e\u0434\u043a\u043b\u044e\u0447\u0451\u043d'],
+        ['\u0411\u0430\u043d\u043a \u043f\u043e \u0443\u043c\u043e\u043b\u0447\u0430\u043d\u0438\u044e', 'AURA Bank'],
+        ['\u041f\u0440\u0438\u0432\u044f\u0437\u0430\u043d\u043d\u044b\u0439 \u0442\u0435\u043b\u0435\u0444\u043e\u043d', '+7 (999) 123-45-67'],
+        ['\u041e\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u043d\u0438\u0435', '100 000 \u20bd/\u0441\u0443\u0442'],
+        ['\u041a\u043e\u043c\u0438\u0441\u0441\u0438\u044f', '0%']
+      ]
+    },
+    cashback: {
+      title: '\ud83d\udcb0 \u041a\u044d\u0448\u0431\u044d\u043a',
+      rows: [
+        ['\u041d\u0430\u043a\u043e\u043f\u043b\u0435\u043d\u043e', '2 340 \u20bd'],
+        ['\u0427\u0435\u043a\u0430\u0448\u043d\u0438\u0446\u044b / \u043a\u0430\u0444\u0435', '5%'],
+        ['\u0421\u0443\u043f\u0435\u0440\u043c\u0430\u0440\u043a\u0435\u0442\u044b', '2%'],
+        ['\u041e\u0441\u0442\u0430\u043b\u044c\u043d\u044b\u0435', '1%'],
+        ['\u041f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u0430', 'AURA Pro Max']
+      ],
+      action: { label: '\u0412\u044b\u0432\u0435\u0441\u0442\u0438 \u043a\u044d\u0448\u0431\u044d\u043a', cls: 'primary' }
+    },
+    split: {
+      title: '\ud83c\udf55 \u0420\u0430\u0437\u0434\u0435\u043b\u0438\u0442\u044c \u0441\u0447\u0451\u0442',
+      rows: [
+        ['\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0439 \u0441\u0447\u0451\u0442', '4 200 \u20bd \u2014 5 \u0447\u0435\u043b.'],
+        ['\u0412\u0430\u0448\u0430 \u0434\u043e\u043b\u044f', '840 \u20bd'],
+        ['\u0421\u043f\u043e\u0441\u043e\u0431', '\u041f\u043e\u0440\u043e\u0432\u043d\u0443, QR, \u0421\u0411\u041f']
+      ],
+      action: { label: '\u041e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u0437\u0430\u043f\u0440\u043e\u0441', cls: 'primary' }
+    },
+    export: {
+      title: '\ud83d\udce5 \u042d\u043a\u0441\u043f\u043e\u0440\u0442',
+      rows: [
+        ['\u0424\u043e\u0440\u043c\u0430\u0442', 'CSV, PDF, XLSX'],
+        ['\u041f\u0435\u0440\u0438\u043e\u0434', '\u041b\u044e\u0431\u043e\u0439'],
+        ['\u041f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0439 \u044d\u043a\u0441\u043f\u043e\u0440\u0442', '15 \u043c\u0430\u044f 2026']
+      ],
+      action: { label: '\u0421\u043a\u0430\u0447\u0430\u0442\u044c \u0432\u044b\u043f\u0438\u0441\u043a\u0443 (PDF)', cls: 'primary' }
+    },
+    delete: {
+      title: '\ud83d\uddd1\ufe0f \u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0430\u043a\u043a\u0430\u0443\u043d\u0442',
+      rows: [
+        ['\u0414\u0430\u043d\u043d\u044b\u0435', '\u0411\u0443\u0434\u0443\u0442 \u0443\u0434\u0430\u043b\u0435\u043d\u044b'],
+        ['\u041a\u0430\u0440\u0442\u044b', '\u0411\u0443\u0434\u0443\u0442 \u043e\u0442\u0432\u044f\u0437\u0430\u043d\u044b'],
+        ['\u0411\u0430\u043b\u0430\u043d\u0441', '\u041d\u0435\u043e\u0431\u0445\u043e\u0434\u0438\u043c\u043e \u0432\u044b\u0432\u0435\u0441\u0442\u0438'],
+        ['\u0414\u0435\u0439\u0441\u0442\u0432\u0438\u0435', '\u041d\u0435\u043e\u0431\u0440\u0430\u0442\u0438\u043c\u043e']
+      ],
+      action: { label: '\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u0430\u043a\u043a\u0430\u0443\u043d\u0442', cls: 'danger' }
+    },
+    about: {
+      title: '\u2139\ufe0f \u041e \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0438',
+      rows: [
+        ['\u0412\u0435\u0440\u0441\u0438\u044f', '1.0.0 (build 42)'],
+        ['\u041f\u043b\u0430\u0442\u0444\u043e\u0440\u043c\u0430', 'PWA / Web App'],
+        ['\u0420\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u0447\u0438\u043a', 'AURA Technologies'],
+        ['\u041b\u0438\u0446\u0435\u043d\u0437\u0438\u044f', 'MIT'],
+        ['\u0428\u0438\u0444\u0440\u043e\u0432\u0430\u043d\u0438\u0435', 'TLS 1.3 + AES-256']
+      ]
+    }
+  },
+
+  show(key) {
+    const cfg = this._content[key];
+    if (!cfg) { Toast.show('\u0421\u043a\u043e\u0440\u043e', '\u041f\u0440\u0438\u0434\u0451\u0442 \u0432 \u043e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u0438\u0438', '\ud83d\udd27'); return; }
+
+    const rows = (cfg.rows || []).map(([l, v]) =>
+      '<div class="smodal-field"><div class="smodal-label">' + l + '</div><div class="smodal-val">' + v + '</div></div>'
+    ).join('');
+
+    const actionBtn = cfg.action
+      ? '<button class="smodal-action ' + cfg.action.cls + '" onclick="Toast.show(\'' + cfg.action.label + '\',\'\u0421\u043a\u043e\u0440\u043e \u0431\u0443\u0434\u0435\u0442 \u0434\u043e\u0441\u0442\u0443\u043f\u043d\u043e\',\'✨\')">' + cfg.action.label + '</button>'
+      : '';
+
+    document.getElementById('settings-modal-body').innerHTML =
+      '<div class="smodal-title">' + cfg.title + '</div>' + rows + actionBtn;
+
+    document.getElementById('settings-modal').classList.add('show');
+  },
+
+  close() {
+    document.getElementById('settings-modal').classList.remove('show');
+  }
+};
